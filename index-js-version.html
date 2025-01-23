@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>2048 Game</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        background-color: #faf8ef;
+      }
+
+      #grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        background-color: #bbada0;
+        padding: 10px;
+        border-radius: 5px;
+      }
+
+      .cell {
+        width: 80px;
+        height: 80px;
+        background-color: rgba(238, 228, 218, 0.35);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        border-radius: 3px;
+      }
+
+      .tile-2 {
+        background-color: #eee4da;
+        color: #776e65;
+      }
+
+      .tile-4 {
+        background-color: #ede0c8;
+        color: #776e65;
+      }
+
+      .tile-8 {
+        background-color: #f2b179;
+        color: #f9f6f2;
+      }
+
+      .tile-16 {
+        background-color: #f59563;
+        color: #f9f6f2;
+      }
+
+      .tile-32 {
+        background-color: #f67c5f;
+        color: #f9f6f2;
+      }
+
+      .tile-64 {
+        background-color: #f65e3b;
+        color: #f9f6f2;
+      }
+
+      .tile-128 {
+        background-color: #edcf72;
+        color: #f9f6f2;
+        font-size: 20px;
+      }
+
+      .tile-256 {
+        background-color: #edcc61;
+        color: #f9f6f2;
+        font-size: 20px;
+      }
+
+      .tile-512 {
+        background-color: #edc850;
+        color: #f9f6f2;
+        font-size: 20px;
+      }
+
+      .tile-1024 {
+        background-color: #edc53f;
+        color: #f9f6f2;
+        font-size: 18px;
+      }
+
+      .tile-2048 {
+        background-color: #edc22e;
+        color: #f9f6f2;
+        font-size: 18px;
+      }
+
+      #score {
+        margin: 20px 0;
+        font-size: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="score">Score: 0</div>
+    <div id="grid"></div>
+
+    <script>
+      let grid = [];
+      let score = 0;
+
+      function initializeGrid() {
+        grid = Array(4)
+          .fill()
+          .map(() => Array(4).fill(0));
+      }
+
+      function addNewTile() {
+        const emptyCells = [];
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 4; j++) {
+            if (grid[i][j] === 0) {
+              emptyCells.push({ x: i, y: j });
+            }
+          }
+        }
+
+        if (emptyCells.length > 0) {
+          const { x, y } =
+            emptyCells[Math.floor(Math.random() * emptyCells.length)];
+          grid[x][y] = Math.random() < 0.9 ? 2 : 4;
+        }
+      }
+
+      function updateDisplay() {
+        const gridContainer = document.getElementById("grid");
+        gridContainer.innerHTML = "";
+
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 4; j++) {
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            const value = grid[i][j];
+
+            if (value > 0) {
+              cell.textContent = value;
+              cell.classList.add(`tile-${value}`);
+            }
+
+            gridContainer.appendChild(cell);
+          }
+        }
+
+        document.getElementById("score").textContent = `Score: ${score}`;
+      }
+
+      function processRow(row) {
+        // First, remove zeros and get only the numbers
+        let newRow = row.filter((cell) => cell !== 0);
+        let merged = Array(newRow.length).fill(false); // Track merged tiles
+
+        // Merge tiles
+        for (let i = 0; i < newRow.length - 1; i++) {
+          if (!merged[i] && !merged[i + 1] && newRow[i] === newRow[i + 1]) {
+            newRow[i] *= 2;
+            score += newRow[i];
+            newRow.splice(i + 1, 1);
+            merged[i] = true;
+          }
+        }
+
+        // Add zeros back to maintain grid size
+        while (newRow.length < 4) {
+          newRow.push(0);
+        }
+
+        return newRow;
+      }
+
+      function move(direction) {
+        let moved = false;
+        const originalGrid = JSON.stringify(grid);
+
+        switch (direction) {
+          case "left":
+            grid = grid.map((row) => processRow(row));
+            break;
+          case "right":
+            grid = grid.map((row) => processRow([...row].reverse()).reverse());
+            break;
+          case "up":
+            grid = transpose(grid);
+            grid = grid.map((row) => processRow(row));
+            grid = transpose(grid);
+            break;
+          case "down":
+            grid = transpose(grid);
+            grid = grid.map((row) => processRow([...row].reverse()).reverse());
+            grid = transpose(grid);
+            break;
+        }
+
+        // Check if the grid changed after movement
+        if (JSON.stringify(grid) !== originalGrid) {
+          addNewTile();
+          updateDisplay();
+          checkGameOver();
+        }
+      }
+
+      function transpose(matrix) {
+        return matrix[0].map((_, colIndex) =>
+          matrix.map((row) => row[colIndex])
+        );
+      }
+
+      function checkGameOver() {
+        // Existing game over check
+      }
+
+      // Initialize game
+      document.addEventListener("keydown", (e) => {
+        switch (e.key) {
+          case "ArrowLeft":
+            move("left");
+            break;
+          case "ArrowRight":
+            move("right");
+            break;
+          case "ArrowUp":
+            move("up");
+            break;
+          case "ArrowDown":
+            move("down");
+            break;
+        }
+      });
+
+      // Initial setup
+      initializeGrid();
+      addNewTile();
+      addNewTile();
+      updateDisplay();
+    </script>
+  </body>
+</html>
