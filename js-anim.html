@@ -19,48 +19,54 @@
       }
 
       #game-board {
-        width: 405px;
-        height: 405px;
-        background: #bbada0;
-        border-radius: 8px;
+        width: 90%;
+        height: 90vmin;
+        max-width: 500px;
+        max-height: 500px;
+        background: rgb(216, 174, 95);
+        border-radius: 1.5vmin;
         padding: 15px;
         position: relative;
-        transform-origin: center;
+        margin: auto;
+        box-sizing: border-box;
       }
 
       .grid {
         display: grid;
-        grid-template-columns: repeat(4, 90px);
-        grid-template-rows: repeat(4, 90px);
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
         gap: 15px;
-        width: fit-content;
-        height: fit-content;
+        width: 100%;
+        height: 100%;
         position: relative;
         z-index: 1;
+        box-sizing: border-box;
       }
 
       .cell {
-        background: rgba(238, 228, 218, 0.35);
-        border-radius: 8px;
+        background: rgba(238, 228, 218, 0.55);
+        border-radius: 1.5vmin;
         position: relative;
         z-index: 1;
-        width: 90px;
-        height: 90px;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
       }
 
       .tile {
-        position: absolute;
-        width: 92px;
-        height: 92px;
-        border-radius: 8px;
+        width: 100%;
+        height: 100%;
+        border-radius: 1.5vmin;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 35px;
+        font-size: calc(3.5vmin);
         font-weight: bold;
         color: #776e65;
         z-index: 2;
-        transform: translate(-1px, -1px);
+        position: absolute;
+        left: 0;
+        top: 0;
       }
 
       .tile[data-value="2"] {
@@ -88,45 +94,27 @@
       .tile[data-value="128"] {
         color: #f9f6f2;
         background: #edcf72;
-        font-size: 30px;
+        font-size: calc(3vmin);
       }
       .tile[data-value="256"] {
         color: #f9f6f2;
         background: #edcc61;
-        font-size: 30px;
+        font-size: calc(3vmin);
       }
       .tile[data-value="512"] {
         color: #f9f6f2;
         background: #edc850;
-        font-size: 30px;
+        font-size: calc(3vmin);
       }
       .tile[data-value="1024"] {
         color: #f9f6f2;
         background: #edc53f;
-        font-size: 25px;
+        font-size: calc(2.5vmin);
       }
       .tile[data-value="2048"] {
         color: #f9f6f2;
         background: #edc22e;
-        font-size: 25px;
-      }
-
-      @media (max-width: 500px) {
-        #game-board {
-          transform: scale(0.8);
-        }
-      }
-
-      @media (max-width: 400px) {
-        #game-board {
-          transform: scale(0.65);
-        }
-      }
-
-      @media (max-width: 320px) {
-        #game-board {
-          transform: scale(0.5);
-        }
+        font-size: calc(2.5vmin);
       }
     </style>
   </head>
@@ -138,11 +126,7 @@
     <script>
       class Game2048 {
         constructor() {
-          this.boardSize = 420;
           this.cellCount = 4;
-          this.cellGap = 15;
-          this.tileSize = 92;
-
           this.grid = Array(4)
             .fill()
             .map(() => Array(4).fill(0));
@@ -156,10 +140,14 @@
 
         initBoard() {
           const grid = document.querySelector(".grid");
-          for (let i = 0; i < 16; i++) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-            grid.appendChild(cell);
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              const cell = document.createElement("div");
+              cell.className = "cell";
+              cell.dataset.x = x;
+              cell.dataset.y = y;
+              grid.appendChild(cell);
+            }
           }
         }
 
@@ -185,12 +173,10 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          const posX = this.cellGap + x * (90 + this.cellGap) - 1;
-          const posY = this.cellGap + y * (90 + this.cellGap) - 1;
-          tile.style.left = posX + "px";
-          tile.style.top = posY + "px";
-
-          document.getElementById("game-board").appendChild(tile);
+          const cell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          cell.appendChild(tile);
           this.tiles.set(`${x},${y}`, tile);
 
           gsap.from(tile, {
@@ -211,18 +197,14 @@
         }
 
         updateTilePosition(tile, x, y) {
-          const posX = this.cellGap + x * (90 + this.cellGap) - 1;
-          const posY = this.cellGap + y * (90 + this.cellGap) - 1;
-
-          gsap.to(tile, {
-            left: posX + "px",
-            top: posY + "px",
-            duration: 0.15,
-            ease: "power2.out",
-          });
+          const newCell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          newCell.appendChild(tile);
         }
 
         setupControls() {
+          // Keyboard controls
           document.addEventListener("keydown", (e) => {
             if (this.isMoving) return;
             const directions = {
@@ -233,6 +215,68 @@
             };
             if (directions[e.keyCode]) this.move(directions[e.keyCode]);
           });
+
+          // Touch controls
+          let touchStartX = 0;
+          let touchStartY = 0;
+          let touchEndX = 0;
+          let touchEndY = 0;
+
+          document.addEventListener(
+            "touchstart",
+            (e) => {
+              touchStartX = e.touches[0].clientX;
+              touchStartY = e.touches[0].clientY;
+            },
+            { passive: true }
+          );
+
+          document.addEventListener(
+            "touchmove",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+
+          document.addEventListener(
+            "touchend",
+            (e) => {
+              if (this.isMoving) return;
+
+              touchEndX = e.changedTouches[0].clientX;
+              touchEndY = e.changedTouches[0].clientY;
+
+              const deltaX = touchEndX - touchStartX;
+              const deltaY = touchEndY - touchStartY;
+              const minSwipeDistance = 30; // minimum swipe distance in pixels
+
+              if (
+                Math.abs(deltaX) < minSwipeDistance &&
+                Math.abs(deltaY) < minSwipeDistance
+              ) {
+                return; // Ignore small movements
+              }
+
+              // Determine if the swipe is more horizontal or vertical
+              if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
+                if (deltaX > 0) {
+                  this.move("right");
+                } else {
+                  this.move("left");
+                }
+              } else {
+                // Vertical swipe
+                if (deltaY > 0) {
+                  this.move("down");
+                } else {
+                  this.move("up");
+                }
+              }
+            },
+            { passive: true }
+          );
         }
 
         move(direction) {
@@ -318,6 +362,14 @@
           this.tiles.delete(key);
           this.grid[fromY][fromX] = 0;
 
+          const cellWidth = document.querySelector(".cell").offsetWidth;
+          const cellHeight = document.querySelector(".cell").offsetHeight;
+          const gap = 15; // matches the grid gap in CSS
+
+          // Calculate the distance to move
+          const moveX = (toX - fromX) * (cellWidth + gap);
+          const moveY = (toY - fromY) * (cellHeight + gap);
+
           if (this.grid[toY][toX] > 0) {
             const mergedTile = this.tiles.get(`${toX},${toY}`);
             gsap.to(mergedTile, {
@@ -337,19 +389,27 @@
           tile.dataset.value = value;
           this.tiles.set(`${toX},${toY}`, tile);
 
-          // Add bounce effect during movement
+          const newCell = document.querySelector(
+            `.cell[data-x="${toX}"][data-y="${toY}"]`
+          );
+
           gsap.to(tile, {
+            x: moveX,
+            y: moveY,
             scale: 1.1,
             duration: 0.15,
             ease: "power1.out",
-          });
+            onComplete: () => {
+              // Reset position and move to new cell
+              gsap.set(tile, { x: 0, y: 0 });
+              newCell.appendChild(tile);
 
-          gsap.to(tile, {
-            left: this.cellGap + toX * (90 + this.cellGap) - 1 + "px",
-            top: this.cellGap + toY * (90 + this.cellGap) - 1 + "px",
-            scale: 1,
-            duration: 0.2,
-            ease: "back.out(1.25c)",
+              gsap.to(tile, {
+                scale: 1,
+                duration: 0.1,
+                ease: "back.out(1.25)",
+              });
+            },
           });
         }
 
