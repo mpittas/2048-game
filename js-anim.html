@@ -19,7 +19,7 @@
       }
 
       #game-board {
-        width: 90vmin;
+        width: 90%;
         height: 90vmin;
         max-width: 500px;
         max-height: 500px;
@@ -28,6 +28,7 @@
         padding: 15px;
         position: relative;
         margin: auto;
+        box-sizing: border-box;
       }
 
       .grid {
@@ -39,6 +40,7 @@
         height: 100%;
         position: relative;
         z-index: 1;
+        box-sizing: border-box;
       }
 
       .cell {
@@ -48,12 +50,12 @@
         z-index: 1;
         width: 100%;
         height: 100%;
+        box-sizing: border-box;
       }
 
       .tile {
-        position: absolute;
-        width: 23%;
-        height: 23%;
+        width: 100%;
+        height: 100%;
         border-radius: 8px;
         display: flex;
         justify-content: center;
@@ -62,6 +64,9 @@
         font-weight: bold;
         color: #776e65;
         z-index: 2;
+        position: absolute;
+        left: 0;
+        top: 0;
       }
 
       .tile[data-value="2"] {
@@ -135,10 +140,14 @@
 
         initBoard() {
           const grid = document.querySelector(".grid");
-          for (let i = 0; i < 16; i++) {
-            const cell = document.createElement("div");
-            cell.className = "cell";
-            grid.appendChild(cell);
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              const cell = document.createElement("div");
+              cell.className = "cell";
+              cell.dataset.x = x;
+              cell.dataset.y = y;
+              grid.appendChild(cell);
+            }
           }
         }
 
@@ -155,7 +164,6 @@
             emptyCells[Math.floor(Math.random() * emptyCells.length)];
           const value = Math.random() < 0.9 ? 2 : 4;
           this.grid[y][x] = value;
-          //   s
           this.createTile(x, y, value);
         }
 
@@ -165,12 +173,10 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          const posX = x * 25.5 + 3; // 25.5% accounts for the gap
-          const posY = y * 25.5 + 3; // 3% is the initial padding
-          tile.style.left = posX + "%";
-          tile.style.top = posY + "%";
-
-          document.getElementById("game-board").appendChild(tile);
+          const cell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          cell.appendChild(tile);
           this.tiles.set(`${x},${y}`, tile);
 
           gsap.from(tile, {
@@ -191,15 +197,10 @@
         }
 
         updateTilePosition(tile, x, y) {
-          const posX = x * 25.5 + 3;
-          const posY = y * 25.5 + 3;
-
-          gsap.to(tile, {
-            left: posX + "%",
-            top: posY + "%",
-            duration: 0.15,
-            ease: "power2.out",
-          });
+          const newCell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          newCell.appendChild(tile);
         }
 
         setupControls() {
@@ -298,6 +299,14 @@
           this.tiles.delete(key);
           this.grid[fromY][fromX] = 0;
 
+          const cellWidth = document.querySelector(".cell").offsetWidth;
+          const cellHeight = document.querySelector(".cell").offsetHeight;
+          const gap = 15; // matches the grid gap in CSS
+
+          // Calculate the distance to move
+          const moveX = (toX - fromX) * (cellWidth + gap);
+          const moveY = (toY - fromY) * (cellHeight + gap);
+
           if (this.grid[toY][toX] > 0) {
             const mergedTile = this.tiles.get(`${toX},${toY}`);
             gsap.to(mergedTile, {
@@ -317,18 +326,27 @@
           tile.dataset.value = value;
           this.tiles.set(`${toX},${toY}`, tile);
 
+          const newCell = document.querySelector(
+            `.cell[data-x="${toX}"][data-y="${toY}"]`
+          );
+
           gsap.to(tile, {
+            x: moveX,
+            y: moveY,
             scale: 1.1,
             duration: 0.15,
             ease: "power1.out",
-          });
+            onComplete: () => {
+              // Reset position and move to new cell
+              gsap.set(tile, { x: 0, y: 0 });
+              newCell.appendChild(tile);
 
-          gsap.to(tile, {
-            left: toX * 25.5 + 3 + "%",
-            top: toY * 25.5 + 3 + "%",
-            scale: 1,
-            duration: 0.2,
-            ease: "back.out(1.25)",
+              gsap.to(tile, {
+                scale: 1,
+                duration: 0.1,
+                ease: "back.out(1.25)",
+              });
+            },
           });
         }
 
