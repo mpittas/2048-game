@@ -1,158 +1,430 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>2048 Game</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
       body {
-        font-family: Arial, sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
         height: 100vh;
-        background-color: #faf8ef;
+        margin: 0;
+        background: #faf8ef;
+        font-family: Arial, sans-serif;
       }
+
       #game-board {
-        display: grid;
-        grid-template-columns: repeat(4, 100px);
-        grid-template-rows: repeat(4, 100px);
-        gap: 10px;
-        background-color: #bbada0;
-        padding: 10px;
-        border-radius: 10px;
+        width: 90%;
+        height: 90vmin;
+        max-width: 500px;
+        max-height: 500px;
+        background: #bbada0;
+        border-radius: 1.5vmin;
+        padding: 15px;
+        position: relative;
+        margin: auto;
+        box-sizing: border-box;
       }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 15px;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        z-index: 1;
+        box-sizing: border-box;
+      }
+
+      .cell {
+        background: rgba(238, 228, 218, 0.55);
+        border-radius: 1.5vmin;
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+      }
+
       .tile {
+        width: 100%;
+        height: 100%;
+        border-radius: 1.5vmin;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: 24px;
+        font-size: calc(3.5vmin);
         font-weight: bold;
-        background-color: #cdc1b4;
-        border-radius: 5px;
+        color: #776e65;
+        z-index: 2;
+        position: absolute;
+        left: 0;
+        top: 0;
       }
-      .tile-2 {
-        background-color: #eee4da;
+
+      .tile[data-value="2"] {
+        background: #eee4da;
       }
-      .tile-4 {
-        background-color: #ede0c8;
+      .tile[data-value="4"] {
+        background: #ede0c8;
       }
-      .tile-8 {
-        background-color: #f2b179;
+      .tile[data-value="8"] {
+        color: #f9f6f2;
+        background: #f2b179;
       }
-      .tile-16 {
-        background-color: #f59563;
+      .tile[data-value="16"] {
+        color: #f9f6f2;
+        background: #f59563;
       }
-      .tile-32 {
-        background-color: #f67c5f;
+      .tile[data-value="32"] {
+        color: #f9f6f2;
+        background: #f67c5f;
       }
-      .tile-64 {
-        background-color: #f65e3b;
+      .tile[data-value="64"] {
+        color: #f9f6f2;
+        background: #f65e3b;
       }
-      .tile-128 {
-        background-color: #edcf72;
+      .tile[data-value="128"] {
+        color: #f9f6f2;
+        background: #edcf72;
+        font-size: calc(3vmin);
       }
-      .tile-256 {
-        background-color: #edcc61;
+      .tile[data-value="256"] {
+        color: #f9f6f2;
+        background: #edcc61;
+        font-size: calc(3vmin);
       }
-      .tile-512 {
-        background-color: #edc850;
+      .tile[data-value="512"] {
+        color: #f9f6f2;
+        background: #edc850;
+        font-size: calc(3vmin);
       }
-      .tile-1024 {
-        background-color: #edc53f;
+      .tile[data-value="1024"] {
+        color: #f9f6f2;
+        background: #edc53f;
+        font-size: calc(2.5vmin);
       }
-      .tile-2048 {
-        background-color: #edc22e;
+      .tile[data-value="2048"] {
+        color: #f9f6f2;
+        background: #edc22e;
+        font-size: calc(2.5vmin);
       }
     </style>
   </head>
   <body>
-    <div id="game-board"></div>
+    <div id="game-board">
+      <div class="grid"></div>
+    </div>
 
-    <!-- Load Brython -->
-    <script src="https://cdn.jsdelivr.net/npm/brython@3.11/brython.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/brython@3.11/brython_stdlib.js"></script>
+    <script>
+      class Game2048 {
+        constructor() {
+          this.cellCount = 4;
+          this.grid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+          this.tiles = new Map();
+          this.isMoving = false;
+          this.initBoard();
+          this.addNewTile();
+          this.addNewTile();
+          this.setupControls();
+        }
 
-    <script type="text/python">
-      from browser import document, html
-      import random
+        initBoard() {
+          const grid = document.querySelector(".grid");
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              const cell = document.createElement("div");
+              cell.className = "cell";
+              cell.dataset.x = x;
+              cell.dataset.y = y;
+              grid.appendChild(cell);
+            }
+          }
+        }
 
-      # Initialize the game board
-      board = [[0 for _ in range(4)] for _ in range(4)]
-      score = 0
+        addNewTile() {
+          const emptyCells = [];
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              if (this.grid[y][x] === 0) emptyCells.push({ x, y });
+            }
+          }
+          if (emptyCells.length === 0) return;
 
-      def add_random_tile():
-          empty_tiles = [(i, j) for i in range(4) for j in range(4) if board[i][j] == 0]
-          if empty_tiles:
-              i, j = random.choice(empty_tiles)
-              board[i][j] = 2 if random.random() < 0.9 else 4
+          const { x, y } =
+            emptyCells[Math.floor(Math.random() * emptyCells.length)];
+          const value = Math.random() < 0.9 ? 2 : 4;
+          this.grid[y][x] = value;
+          this.createTile(x, y, value);
+        }
 
-      def render_board():
-          game_board = document["game-board"]
-          game_board.innerHTML = ""
-          for row in board:
-              for cell in row:
-                  tile = html.DIV(f"{cell}" if cell else "", Class=f"tile tile-{cell}")
-                  game_board <= tile
+        createTile(x, y, value) {
+          const tile = document.createElement("div");
+          tile.className = "tile";
+          tile.textContent = value;
+          tile.dataset.value = value;
 
-      def move_left():
-          global board
-          new_board = []
-          for row in board:
-              new_row = [cell for cell in row if cell != 0]
-              new_row += [0] * (4 - len(new_row))
-              for i in range(3):
-                  if new_row[i] == new_row[i + 1] and new_row[i] != 0:
-                      new_row[i] *= 2
-                      new_row[i + 1] = 0
-              new_row = [cell for cell in new_row if cell != 0]
-              new_row += [0] * (4 - len(new_row))
-              new_board.append(new_row)
-          board = new_board
+          const cell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          cell.appendChild(tile);
+          this.tiles.set(`${x},${y}`, tile);
 
-      def move(direction):
-          global board
-          if direction == "left":
-              move_left()
-          elif direction == "right":
-              board = [row[::-1] for row in board]
-              move_left()
-              board = [row[::-1] for row in board]
-          elif direction == "up":
-              board = [list(row) for row in zip(*board)]
-              move_left()
-              board = [list(row) for row in zip(*board)]
-          elif direction == "down":
-              # Corrected down movement handling
-              board = [list(row) for row in zip(*board)]  # Transpose the board
-              board = [row[::-1] for row in board]        # Reverse each row
-              move_left()
-              board = [row[::-1] for row in board]        # Reverse each row back
-              board = [list(row) for row in zip(*board)]  # Transpose back
-          add_random_tile()
-          render_board()
+          gsap.from(tile, {
+            scale: 0,
+            duration: 0.4,
+            ease: "back.out(2.5)",
+            onComplete: () => {
+              gsap.to(tile, {
+                opacity: 0.8,
+                yoyo: true,
+                duration: 0.1,
+                delay: 0.02,
+                repeat: 3,
+                ease: "power3.inOut",
+              });
+            },
+          });
+        }
 
-      def handle_keypress(event):
-          key = event.key
-          if key == "ArrowLeft":
-              move("left")
-          elif key == "ArrowRight":
-              move("right")
-          elif key == "ArrowUp":
-              move("up")
-          elif key == "ArrowDown":
-              move("down")
+        updateTilePosition(tile, x, y) {
+          const newCell = document.querySelector(
+            `.cell[data-x="${x}"][data-y="${y}"]`
+          );
+          newCell.appendChild(tile);
+        }
 
-      # Initialize the game
-      add_random_tile()
-      add_random_tile()
-      render_board()
-      document.addEventListener("keydown", handle_keypress)
-    </script>
+        setupControls() {
+          // Keyboard controls
+          document.addEventListener("keydown", (e) => {
+            if (this.isMoving) return;
+            const directions = {
+              37: "left",
+              38: "up",
+              39: "right",
+              40: "down",
+            };
+            if (directions[e.keyCode]) this.move(directions[e.keyCode]);
+          });
 
-    <!-- Run Brython -->
-    <script type="text/javascript">
-      brython();
+          // Touch controls
+          let touchStartX = 0;
+          let touchStartY = 0;
+          let touchEndX = 0;
+          let touchEndY = 0;
+
+          document.addEventListener(
+            "touchstart",
+            (e) => {
+              touchStartX = e.touches[0].clientX;
+              touchStartY = e.touches[0].clientY;
+            },
+            { passive: true }
+          );
+
+          document.addEventListener(
+            "touchmove",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+
+          document.addEventListener(
+            "touchend",
+            (e) => {
+              if (this.isMoving) return;
+
+              touchEndX = e.changedTouches[0].clientX;
+              touchEndY = e.changedTouches[0].clientY;
+
+              const deltaX = touchEndX - touchStartX;
+              const deltaY = touchEndY - touchStartY;
+              const minSwipeDistance = 30; // minimum swipe distance in pixels
+
+              if (
+                Math.abs(deltaX) < minSwipeDistance &&
+                Math.abs(deltaY) < minSwipeDistance
+              ) {
+                return; // Ignore small movements
+              }
+
+              // Determine if the swipe is more horizontal or vertical
+              if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
+                if (deltaX > 0) {
+                  this.move("right");
+                } else {
+                  this.move("left");
+                }
+              } else {
+                // Vertical swipe
+                if (deltaY > 0) {
+                  this.move("down");
+                } else {
+                  this.move("up");
+                }
+              }
+            },
+            { passive: true }
+          );
+        }
+
+        move(direction) {
+          this.isMoving = true;
+          let moved = false;
+          const newGrid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+          const vectors = {
+            left: { x: -1, y: 0 },
+            right: { x: 1, y: 0 },
+            up: { x: 0, y: -1 },
+            down: { x: 0, y: 1 },
+          };
+          const vector = vectors[direction];
+          const positions = this.getTraversalOrder(vector);
+
+          for (const { x, y } of positions) {
+            if (this.grid[y][x] === 0) continue;
+
+            let newX = x;
+            let newY = y;
+            let currentValue = this.grid[y][x];
+            let nextX = x + vector.x;
+            let nextY = y + vector.y;
+
+            while (this.withinBounds(nextX, nextY)) {
+              const nextValue = this.grid[nextY][nextX];
+
+              if (nextValue === 0) {
+                newX = nextX;
+                newY = nextY;
+              } else if (nextValue === currentValue) {
+                newX = nextX;
+                newY = nextY;
+                currentValue *= 2;
+                break;
+              } else {
+                break;
+              }
+
+              nextX += vector.x;
+              nextY += vector.y;
+            }
+
+            if (x !== newX || y !== newY) {
+              moved = true;
+              this.moveTile(x, y, newX, newY, currentValue);
+            }
+          }
+
+          if (moved) {
+            setTimeout(() => {
+              this.cleanupTiles();
+              this.addNewTile();
+              this.isMoving = false;
+            }, 150);
+          } else {
+            this.isMoving = false;
+          }
+        }
+
+        getTraversalOrder(vector) {
+          const positions = [];
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              positions.push({
+                x: vector.x === 1 ? 3 - x : x,
+                y: vector.y === 1 ? 3 - y : y,
+              });
+            }
+          }
+          return positions;
+        }
+
+        withinBounds(x, y) {
+          return x >= 0 && x < 4 && y >= 0 && y < 4;
+        }
+
+        moveTile(fromX, fromY, toX, toY, value) {
+          const key = `${fromX},${fromY}`;
+          const tile = this.tiles.get(key);
+          this.tiles.delete(key);
+          this.grid[fromY][fromX] = 0;
+
+          const cellWidth = document.querySelector(".cell").offsetWidth;
+          const cellHeight = document.querySelector(".cell").offsetHeight;
+          const gap = 15; // matches the grid gap in CSS
+
+          // Calculate the distance to move
+          const moveX = (toX - fromX) * (cellWidth + gap);
+          const moveY = (toY - fromY) * (cellHeight + gap);
+
+          if (this.grid[toY][toX] > 0) {
+            const mergedTile = this.tiles.get(`${toX},${toY}`);
+            gsap.to(mergedTile, {
+              scale: 1.2,
+              duration: 0.1,
+              yoyo: true,
+              repeat: 1,
+              ease: "bounce.out",
+              onComplete: () => {
+                mergedTile.remove();
+              },
+            });
+          }
+
+          this.grid[toY][toX] = value;
+          tile.textContent = value;
+          tile.dataset.value = value;
+          this.tiles.set(`${toX},${toY}`, tile);
+
+          const newCell = document.querySelector(
+            `.cell[data-x="${toX}"][data-y="${toY}"]`
+          );
+
+          gsap.to(tile, {
+            x: moveX,
+            y: moveY,
+            scale: 1.1,
+            duration: 0.15,
+            ease: "power1.out",
+            onComplete: () => {
+              // Reset position and move to new cell
+              gsap.set(tile, { x: 0, y: 0 });
+              newCell.appendChild(tile);
+
+              gsap.to(tile, {
+                scale: 1,
+                duration: 0.1,
+                ease: "back.out(1.25)",
+              });
+            },
+          });
+        }
+
+        cleanupTiles() {
+          this.tiles.forEach((tile, key) => {
+            const [x, y] = key.split(",").map(Number);
+            if (this.grid[y][x] !== parseInt(tile.dataset.value)) {
+              tile.remove();
+              this.tiles.delete(key);
+            }
+          });
+        }
+      }
+
+      new Game2048();
     </script>
   </body>
 </html>
