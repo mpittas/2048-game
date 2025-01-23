@@ -233,6 +233,58 @@
             };
             if (directions[e.keyCode]) this.move(directions[e.keyCode]);
           });
+
+          // Add touch controls
+          let touchStartX = 0;
+          let touchStartY = 0;
+          const gameBoard = document.getElementById("game-board");
+
+          gameBoard.addEventListener("touchstart", (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          });
+
+          gameBoard.addEventListener("touchend", (e) => {
+            if (this.isMoving) return;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const deltaX = touchEndX - touchStartX;
+            const deltaY = touchEndY - touchStartY;
+
+            // Minimum swipe distance to trigger a move (in pixels)
+            const minSwipeDistance = 30;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+              // Horizontal swipe
+              if (Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                  this.move("right");
+                } else {
+                  this.move("left");
+                }
+              }
+            } else {
+              // Vertical swipe
+              if (Math.abs(deltaY) > minSwipeDistance) {
+                if (deltaY > 0) {
+                  this.move("down");
+                } else {
+                  this.move("up");
+                }
+              }
+            }
+          });
+
+          // Prevent scrolling when swiping inside game board
+          gameBoard.addEventListener(
+            "touchmove",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
         }
 
         move(direction) {
