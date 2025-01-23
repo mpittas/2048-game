@@ -2,6 +2,10 @@
 <html>
   <head>
     <title>2048 Game</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
       body {
@@ -21,6 +25,7 @@
         border-radius: 8px;
         padding: 15px;
         position: relative;
+        transform-origin: center;
       }
 
       .grid {
@@ -104,6 +109,24 @@
         color: #f9f6f2;
         background: #edc22e;
         font-size: 25px;
+      }
+
+      @media (max-width: 500px) {
+        #game-board {
+          transform: scale(0.8);
+        }
+      }
+
+      @media (max-width: 400px) {
+        #game-board {
+          transform: scale(0.65);
+        }
+      }
+
+      @media (max-width: 320px) {
+        #game-board {
+          transform: scale(0.5);
+        }
       }
     </style>
   </head>
