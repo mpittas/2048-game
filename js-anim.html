@@ -26,6 +26,11 @@
         padding: 15px;
         position: relative;
         transform-origin: center;
+        touch-action: none;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .grid {
@@ -239,52 +244,72 @@
           let touchStartY = 0;
           const gameBoard = document.getElementById("game-board");
 
-          gameBoard.addEventListener("touchstart", (e) => {
-            touchStartX = e.touches[0].clientX;
-            touchStartY = e.touches[0].clientY;
-          });
+          gameBoard.addEventListener(
+            "touchstart",
+            (e) => {
+              e.preventDefault();
+              const touch = e.touches[0];
+              touchStartX = touch.clientX;
+              touchStartY = touch.clientY;
+            },
+            { passive: false }
+          );
 
-          gameBoard.addEventListener("touchend", (e) => {
-            if (this.isMoving) return;
+          gameBoard.addEventListener(
+            "touchend",
+            (e) => {
+              if (this.isMoving) return;
+              e.preventDefault();
 
-            const touchEndX = e.changedTouches[0].clientX;
-            const touchEndY = e.changedTouches[0].clientY;
+              const touch = e.changedTouches[0];
+              const touchEndX = touch.clientX;
+              const touchEndY = touch.clientY;
 
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
+              const deltaX = touchEndX - touchStartX;
+              const deltaY = touchEndY - touchStartY;
 
-            // Minimum swipe distance to trigger a move (in pixels)
-            const minSwipeDistance = 30;
+              // Minimum swipe distance to trigger a move (in pixels)
+              const minSwipeDistance = 20; // Reduced from 30 to make it more responsive
 
-            if (Math.abs(deltaX) > Math.abs(deltaY)) {
-              // Horizontal swipe
-              if (Math.abs(deltaX) > minSwipeDistance) {
+              // Only trigger move if the swipe is significant enough
+              if (
+                Math.abs(deltaX) < minSwipeDistance &&
+                Math.abs(deltaY) < minSwipeDistance
+              ) {
+                return;
+              }
+
+              if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
                 if (deltaX > 0) {
                   this.move("right");
                 } else {
                   this.move("left");
                 }
-              }
-            } else {
-              // Vertical swipe
-              if (Math.abs(deltaY) > minSwipeDistance) {
+              } else {
+                // Vertical swipe
                 if (deltaY > 0) {
                   this.move("down");
                 } else {
                   this.move("up");
                 }
               }
-            }
-          });
+            },
+            { passive: false }
+          );
 
-          // Prevent scrolling when swiping inside game board
+          // Prevent scrolling when touching the game board
           gameBoard.addEventListener(
             "touchmove",
             (e) => {
               e.preventDefault();
+              e.stopPropagation();
             },
             { passive: false }
           );
+
+          // Prevent any default touch actions on the game board
+          gameBoard.style.touchAction = "none";
         }
 
         move(direction) {
