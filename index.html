@@ -154,21 +154,21 @@
           // Animation speed controls
           this.animationConfig = {
             // Main movement animation
-            moveSpeed: 0.12, // Further reduced for snappier movement
-            moveEase: "power1.out", // Simplified easing for better performance
+            moveSpeed: 0.15, // Back to slightly longer duration for smoothness
+            moveEase: "power2.out", // Back to power2 for smoother deceleration
 
             // Merge animation
-            mergeSpeed: 0.08, // Faster merge
-            mergeScale: 1.08, // Smaller scale for smoother merging
-            mergeEase: "sine.out", // Simpler easing function
+            mergeSpeed: 0.12, // Back to original merge speed
+            mergeScale: 1.15, // Original scale for better visibility
+            mergeEase: "power2.inOut", // Back to power2 for smoother merge
 
             // New tile and arrival animations
-            arrivalSpeed: 0.1, // Faster arrival
-            arrivalScale: 1.03, // Subtler scale effect
-            arrivalEase: "sine.out", // Simpler easing
+            arrivalSpeed: 0.15, // Back to original arrival speed
+            arrivalScale: 1.08, // Original scale for better feedback
+            arrivalEase: "power2.out", // Back to power2 for smoother arrival
 
             // Delay before adding new tile
-            newTileDelay: 50, // Reduced delay for faster response
+            newTileDelay: 100, // Back to original delay for smoother sequence
           };
 
           // Cache DOM queries for better performance
@@ -182,7 +182,7 @@
           this.cellDimensions = {
             width: cell.offsetWidth,
             height: cell.offsetHeight,
-            gap: 10, // Match the new CSS gap value
+            gap: 10,
           };
           this.gridElement.removeChild(cell);
 
@@ -233,9 +233,8 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          // Optimize GPU hints
+          // Optimize GPU hints but keep it simpler
           tile.style.willChange = "transform";
-          tile.style.transform = "translate3d(0,0,0)";
           tile.style.backfaceVisibility = "hidden";
 
           const cell = document.querySelector(
@@ -246,16 +245,16 @@
 
           gsap.from(tile, {
             scale: 0,
-            duration: 0.2, // Faster initial appearance
-            ease: "back.out(1.2)", // Reduced overshoot
+            duration: 0.3, // Back to original duration
+            ease: "back.out(1.5)",
             force3D: true,
             onComplete: () => {
               gsap.to(tile, {
-                scale: 1.02, // Subtler pop effect
+                scale: 1.05,
                 yoyo: true,
-                duration: 0.06,
+                duration: 0.1,
                 repeat: 1,
-                ease: "sine.inOut",
+                ease: "power2.inOut",
                 force3D: true,
               });
             },
@@ -447,7 +446,6 @@
               repeat: 1,
               ease: this.animationConfig.mergeEase,
               force3D: true,
-              overwrite: true, // Prevent animation conflicts
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -469,13 +467,11 @@
             duration: this.animationConfig.moveSpeed,
             ease: this.animationConfig.moveEase,
             force3D: true,
-            overwrite: true,
             onComplete: () => {
               gsap.set(tile, {
                 x: 0,
                 y: 0,
                 clearProps: "transform",
-                force3D: true,
               });
               newCell.appendChild(tile);
 
@@ -484,7 +480,6 @@
                 duration: this.animationConfig.arrivalSpeed,
                 ease: this.animationConfig.arrivalEase,
                 force3D: true,
-                overwrite: true,
               });
             },
           });
@@ -511,15 +506,15 @@
         // Reset to default speeds
         resetSpeed() {
           this.animationConfig = {
-            moveSpeed: 0.12,
-            moveEase: "power1.out",
-            mergeSpeed: 0.08,
-            mergeScale: 1.08,
-            mergeEase: "sine.out",
-            arrivalSpeed: 0.1,
-            arrivalScale: 1.03,
-            arrivalEase: "sine.out",
-            newTileDelay: 50,
+            moveSpeed: 0.15,
+            moveEase: "power2.out",
+            mergeSpeed: 0.12,
+            mergeScale: 1.15,
+            mergeEase: "power2.inOut",
+            arrivalSpeed: 0.15,
+            arrivalScale: 1.08,
+            arrivalEase: "power2.out",
+            newTileDelay: 100,
           };
         }
       }
