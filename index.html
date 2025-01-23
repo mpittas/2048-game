@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2048 Game</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #faf8ef;
+      }
+      #game-board {
+        display: grid;
+        grid-template-columns: repeat(4, 100px);
+        grid-template-rows: repeat(4, 100px);
+        gap: 10px;
+        background-color: #bbada0;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      .tile {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        font-weight: bold;
+        background-color: #cdc1b4;
+        border-radius: 5px;
+      }
+      .tile-2 {
+        background-color: #eee4da;
+      }
+      .tile-4 {
+        background-color: #ede0c8;
+      }
+      .tile-8 {
+        background-color: #f2b179;
+      }
+      .tile-16 {
+        background-color: #f59563;
+      }
+      .tile-32 {
+        background-color: #f67c5f;
+      }
+      .tile-64 {
+        background-color: #f65e3b;
+      }
+      .tile-128 {
+        background-color: #edcf72;
+      }
+      .tile-256 {
+        background-color: #edcc61;
+      }
+      .tile-512 {
+        background-color: #edc850;
+      }
+      .tile-1024 {
+        background-color: #edc53f;
+      }
+      .tile-2048 {
+        background-color: #edc22e;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-board"></div>
+
+    <!-- Load Brython -->
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.11/brython.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/brython@3.11/brython_stdlib.js"></script>
+
+    <script type="text/python">
+      from browser import document, html
+      import random
+
+      # Initialize the game board
+      board = [[0 for _ in range(4)] for _ in range(4)]
+      score = 0
+
+      def add_random_tile():
+          empty_tiles = [(i, j) for i in range(4) for j in range(4) if board[i][j] == 0]
+          if empty_tiles:
+              i, j = random.choice(empty_tiles)
+              board[i][j] = 2 if random.random() < 0.9 else 4
+
+      def render_board():
+          game_board = document["game-board"]
+          game_board.innerHTML = ""
+          for row in board:
+              for cell in row:
+                  tile = html.DIV(f"{cell}" if cell else "", Class=f"tile tile-{cell}")
+                  game_board <= tile
+
+      def move_left():
+          global board
+          new_board = []
+          for row in board:
+              new_row = [cell for cell in row if cell != 0]
+              new_row += [0] * (4 - len(new_row))
+              for i in range(3):
+                  if new_row[i] == new_row[i + 1] and new_row[i] != 0:
+                      new_row[i] *= 2
+                      new_row[i + 1] = 0
+              new_row = [cell for cell in new_row if cell != 0]
+              new_row += [0] * (4 - len(new_row))
+              new_board.append(new_row)
+          board = new_board
+
+      def move(direction):
+          global board
+          if direction == "left":
+              move_left()
+          elif direction == "right":
+              board = [row[::-1] for row in board]
+              move_left()
+              board = [row[::-1] for row in board]
+          elif direction == "up":
+              board = [list(row) for row in zip(*board)]
+              move_left()
+              board = [list(row) for row in zip(*board)]
+          elif direction == "down":
+              # Corrected down movement handling
+              board = [list(row) for row in zip(*board)]  # Transpose the board
+              board = [row[::-1] for row in board]        # Reverse each row
+              move_left()
+              board = [row[::-1] for row in board]        # Reverse each row back
+              board = [list(row) for row in zip(*board)]  # Transpose back
+          add_random_tile()
+          render_board()
+
+      def handle_keypress(event):
+          key = event.key
+          if key == "ArrowLeft":
+              move("left")
+          elif key == "ArrowRight":
+              move("right")
+          elif key == "ArrowUp":
+              move("up")
+          elif key == "ArrowDown":
+              move("down")
+
+      # Initialize the game
+      add_random_tile()
+      add_random_tile()
+      render_board()
+      document.addEventListener("keydown", handle_keypress)
+    </script>
+
+    <!-- Run Brython -->
+    <script type="text/javascript">
+      brython();
+    </script>
+  </body>
+</html>
