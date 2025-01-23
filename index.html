@@ -182,6 +182,26 @@
           opacity: 0;
         }
       }
+
+      .reset-button {
+        position: absolute;
+        top: -60px;
+        left: 0;
+        background: #8f7a66;
+        color: #f9f6f2;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 3px;
+        font-size: clamp(12px, 3vmin, 16px);
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+
+      .reset-button:hover {
+        background: #9f8a76;
+      }
     </style>
   </head>
   <body>
@@ -190,6 +210,7 @@
         <div class="score-label">score</div>
         <div class="score-number">0</div>
       </div>
+      <button class="reset-button">New Game</button>
       <div class="grid"></div>
     </div>
 
@@ -239,10 +260,18 @@
           this.isMoving = false;
           this.score = 0;
           this.scoreElement = document.querySelector(".score-number");
-          this.initBoard();
-          this.addNewTile();
-          this.addNewTile();
+
+          // Load saved state or start new game
+          this.loadGame();
+
           this.setupControls();
+
+          // Add reset button handler
+          document
+            .querySelector(".reset-button")
+            .addEventListener("click", () => {
+              this.resetSpeed();
+            });
         }
 
         initBoard() {
@@ -447,6 +476,7 @@
               this.cleanupTiles();
               this.addNewTile();
               this.isMoving = false;
+              this.saveGame(); // Save after successful move
             }, this.animationConfig.newTileDelay);
           } else {
             this.isMoving = false;
@@ -567,9 +597,51 @@
             arrivalEase: "power2.out",
             newTileDelay: 100,
           };
-          // Reset score when resetting game
+          this.resetGame(); // Call new reset method instead
+        }
+
+        // New method to handle game reset
+        resetGame() {
+          // Clear saved state
+          localStorage.removeItem("game2048");
+
+          // Clear existing tiles
+          this.tiles.forEach((tile) => tile.remove());
+          this.tiles.clear();
+
+          // Reset score
           this.score = 0;
           this.scoreElement.textContent = "0";
+
+          // Reset grid
+          this.grid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+
+          // Add initial tiles
+          this.addNewTile();
+          this.addNewTile();
+        }
+
+        initNewGame() {
+          // Clear any existing tiles and grid
+          this.tiles.forEach((tile) => tile.remove());
+          this.tiles.clear();
+          document.querySelector(".grid").innerHTML = "";
+
+          // Initialize the board once
+          this.initBoard();
+
+          // Reset game state
+          this.grid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+          this.score = 0;
+          this.scoreElement.textContent = "0";
+
+          // Add initial tiles
+          this.addNewTile();
+          this.addNewTile();
         }
 
         // Add this new method
@@ -591,6 +663,57 @@
               scoreAddition.remove();
             }, 600);
           }
+        }
+
+        // Add these new methods for save/load functionality
+        saveGame() {
+          const gameState = {
+            grid: this.grid,
+            score: this.score,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem("game2048", JSON.stringify(gameState));
+        }
+
+        loadGame() {
+          const savedState = localStorage.getItem("game2048");
+
+          if (savedState) {
+            try {
+              const gameState = JSON.parse(savedState);
+
+              // Only restore if saved within last 24 hours
+              if (Date.now() - gameState.timestamp < 24 * 60 * 60 * 1000) {
+                // Clear existing tiles and grid first
+                this.tiles.forEach((tile) => tile.remove());
+                this.tiles.clear();
+                document.querySelector(".grid").innerHTML = "";
+
+                // Initialize the board
+                this.initBoard();
+
+                // Restore the state
+                this.grid = gameState.grid;
+                this.score = gameState.score;
+                this.scoreElement.textContent = this.score;
+
+                // Recreate tiles from saved grid
+                for (let y = 0; y < 4; y++) {
+                  for (let x = 0; x < 4; x++) {
+                    if (this.grid[y][x] !== 0) {
+                      this.createTile(x, y, this.grid[y][x]);
+                    }
+                  }
+                }
+                return;
+              }
+            } catch (e) {
+              console.error("Error loading saved game:", e);
+            }
+          }
+
+          // Start new game if no valid saved state
+          this.initNewGame();
         }
       }
 
