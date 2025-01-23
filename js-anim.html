@@ -25,10 +25,12 @@
 
       .grid {
         display: grid;
-        grid-template: repeat(4, 1fr) / repeat(4, 1fr);
+        /* 400px - (5 * 15px) = 325px, 325px / 4 = 81.25px, round to 82px */
+        grid-template-columns: repeat(4, 82px);
+        grid-template-rows: repeat(4, 82px);
         gap: 15px;
-        width: 100%;
-        height: 100%;
+        width: fit-content;
+        height: fit-content;
         position: relative;
         z-index: 1;
       }
@@ -38,12 +40,14 @@
         border-radius: 3px;
         position: relative;
         z-index: 1;
+        width: 82px;
+        height: 82px;
       }
 
       .tile {
         position: absolute;
-        width: calc((100% - 75px) / 4);
-        height: calc((100% - 75px) / 4);
+        width: 82px;
+        height: 82px;
         border-radius: 3px;
         display: flex;
         justify-content: center;
@@ -114,7 +118,10 @@
           this.boardSize = 400;
           this.cellCount = 4;
           this.cellGap = 15;
-          this.cellSize = (this.boardSize - this.cellGap * 5) / this.cellCount;
+          this.tileSize = Math.floor(
+            (this.boardSize - (this.cellCount + 1) * this.cellGap) /
+              this.cellCount
+          );
 
           this.grid = Array(4)
             .fill()
@@ -158,8 +165,8 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          const posX = this.cellGap + x * (this.cellSize + this.cellGap);
-          const posY = this.cellGap + y * (this.cellSize + this.cellGap);
+          const posX = this.cellGap + x * (this.tileSize + this.cellGap);
+          const posY = this.cellGap + y * (this.tileSize + this.cellGap);
           tile.style.left = posX + "px";
           tile.style.top = posY + "px";
 
@@ -174,8 +181,8 @@
         }
 
         updateTilePosition(tile, x, y) {
-          const posX = this.cellGap + x * (this.cellSize + this.cellGap);
-          const posY = this.cellGap + y * (this.cellSize + this.cellGap);
+          const posX = this.cellGap + x * (this.tileSize + this.cellGap);
+          const posY = this.cellGap + y * (this.tileSize + this.cellGap);
 
           gsap.to(tile, {
             left: posX + "px",
