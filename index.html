@@ -279,9 +279,26 @@
       .modal-button.cancel:hover {
         background: #e8d8c8;
       }
+
+      .score-list {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #776e65;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+        z-index: 999;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        line-height: 1.5;
+      }
     </style>
   </head>
   <body>
+    <div class="score-list"></div>
     <div id="game-board">
       <div class="score-container">
         <div class="score-label">score</div>
@@ -350,6 +367,9 @@
 
           // Load saved state or start new game
           this.loadGame();
+
+          // Update the score list
+          this.updateScoreList();
 
           this.setupControls();
 
@@ -577,10 +597,16 @@
               this.cleanupTiles();
               this.addNewTile();
               this.isMoving = false;
-              this.saveGame(); // Save after successful move
+              this.saveGame();
+
+              // Check if the game is over
+              this.checkGameOver();
             }, this.animationConfig.newTileDelay);
           } else {
             this.isMoving = false;
+
+            // Check if the game is over
+            this.checkGameOver();
           }
         }
 
@@ -630,7 +656,7 @@
               },
             });
 
-            // Update score with the actual merged tile value
+            // Update score when tiles merge
             this.updateScore(value);
           }
 
@@ -703,6 +729,11 @@
 
         // New method to handle game reset
         resetGame() {
+          // Save current score if it's not zero
+          if (this.score > 0) {
+            this.saveScore();
+          }
+
           // Clear saved state
           localStorage.removeItem("game2048");
 
@@ -722,6 +753,9 @@
           // Add initial tiles
           this.addNewTile();
           this.addNewTile();
+
+          // Update the score list
+          this.updateScoreList();
         }
 
         initNewGame() {
@@ -824,6 +858,74 @@
 
         hideConfirmation() {
           document.querySelector(".modal-overlay").classList.remove("active");
+        }
+
+        saveScore() {
+          const scores = this.getStoredScores();
+          // Add new score at the beginning of the array instead of the end
+          scores.unshift({
+            score: this.score,
+            timestamp: new Date().toLocaleString(),
+          });
+          // Keep only the last 10 scores
+          const recentScores = scores.slice(0, 10);
+          localStorage.setItem("game2048Scores", JSON.stringify(recentScores));
+          this.updateScoreList();
+        }
+
+        getStoredScores() {
+          const scores = localStorage.getItem("game2048Scores");
+          return scores ? JSON.parse(scores) : [];
+        }
+
+        updateScoreList() {
+          const scoreListElement = document.querySelector(".score-list");
+          const scores = this.getStoredScores();
+
+          // Add debug logging
+          console.log("Stored scores:", scores);
+
+          scoreListElement.innerHTML =
+            "<strong>Recent Scores:</strong><br>" +
+            scores
+              .map((item) => {
+                if (typeof item === "object" && item.score !== undefined) {
+                  return `${item.score} (${item.timestamp})`;
+                }
+                return `${item} (old format)`;
+              })
+              .join("<br>");
+        }
+
+        checkGameOver() {
+          if (this.isGameOver()) {
+            // Save the score
+            if (this.score > 0) {
+              this.saveScore();
+            }
+          }
+        }
+
+        isGameOver() {
+          // Check for any empty cells
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              if (this.grid[y][x] === 0) return false;
+            }
+          }
+
+          // Check for possible merges
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              const value = this.grid[y][x];
+              // Check right
+              if (x < 3 && this.grid[y][x + 1] === value) return false;
+              // Check down
+              if (y < 3 && this.grid[y + 1][x] === value) return false;
+            }
+          }
+
+          return true;
         }
       }
 
