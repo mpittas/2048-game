@@ -4,7 +4,7 @@
     <title>2048 Game</title>
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
@@ -337,7 +337,7 @@
         body {
           flex-direction: column;
           justify-content: flex-start;
-          padding-top: 20px;
+          padding-top: max(20px, env(safe-area-inset-top, 60px));
           padding-left: 15px;
           padding-right: 15px;
         }
