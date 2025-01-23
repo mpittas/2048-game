@@ -126,6 +126,26 @@
     <script>
       class Game2048 {
         constructor() {
+          // Animation speed controls
+          this.animationConfig = {
+            // Main movement animation
+            moveSpeed: 0.2, // Duration of tile sliding
+            moveEase: "back.out(1.1)", // Easing function for movement
+
+            // Merge animation
+            mergeSpeed: 0.12, // Duration of merge animation
+            mergeScale: 1.15, // How much tile scales when merging
+            mergeEase: "power2.inOut", // Easing for merge animation
+
+            // New tile and arrival animations
+            arrivalSpeed: 0.3, // Duration of bounce animation when tile arrives
+            arrivalScale: 1.08, // How much tile scales on arrival
+            arrivalEase: "power2.out", // Easing for arrival animation
+
+            // Delay before adding new tile
+            newTileDelay: 100, // Milliseconds to wait before adding new tile
+          };
+
           this.cellCount = 4;
           this.grid = Array(4)
             .fill()
@@ -185,11 +205,11 @@
             ease: "back.out(2.5)",
             onComplete: () => {
               gsap.to(tile, {
-                opacity: 0.8,
+                scale: 1.05,
                 yoyo: true,
                 duration: 0.1,
                 delay: 0.02,
-                repeat: 3,
+                repeat: 1,
                 ease: "power3.inOut",
               });
             },
@@ -335,7 +355,7 @@
               this.cleanupTiles();
               this.addNewTile();
               this.isMoving = false;
-            }, 100);
+            }, this.animationConfig.newTileDelay);
           } else {
             this.isMoving = false;
           }
@@ -366,21 +386,19 @@
 
           const cellWidth = document.querySelector(".cell").offsetWidth;
           const cellHeight = document.querySelector(".cell").offsetHeight;
-          const gap = 15; // matches the grid gap in CSS
+          const gap = 15;
 
-          // Calculate the distance to move
           const moveX = (toX - fromX) * (cellWidth + gap);
           const moveY = (toY - fromY) * (cellHeight + gap);
 
           if (this.grid[toY][toX] > 0) {
-            // Enhance merge animation
             const mergedTile = this.tiles.get(`${toX},${toY}`);
             gsap.to(mergedTile, {
-              scale: 1.15,
-              duration: 0.12,
+              scale: this.animationConfig.mergeScale,
+              duration: this.animationConfig.mergeSpeed,
               yoyo: true,
               repeat: 1,
-              ease: "power2.inOut",
+              ease: this.animationConfig.mergeEase,
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -396,20 +414,19 @@
             `.cell[data-x="${toX}"][data-y="${toY}"]`
           );
 
-          // Main movement animation
           gsap.to(tile, {
             x: moveX,
             y: moveY,
-            duration: 0.15,
-            ease: "power3.out",
+            duration: this.animationConfig.moveSpeed,
+            ease: this.animationConfig.moveEase,
             onComplete: () => {
               gsap.set(tile, { x: 0, y: 0 });
               newCell.appendChild(tile);
 
               gsap.from(tile, {
-                scale: 1.08,
-                duration: 0.12,
-                ease: "power2.out",
+                scale: this.animationConfig.arrivalScale,
+                duration: this.animationConfig.arrivalSpeed,
+                ease: this.animationConfig.arrivalEase,
               });
             },
           });
@@ -423,6 +440,29 @@
               this.tiles.delete(key);
             }
           });
+        }
+
+        // Add these methods to the Game2048 class
+        setSpeed(multiplier) {
+          this.animationConfig.moveSpeed *= multiplier;
+          this.animationConfig.mergeSpeed *= multiplier;
+          this.animationConfig.arrivalSpeed *= multiplier;
+          this.animationConfig.newTileDelay *= multiplier;
+        }
+
+        // Reset to default speeds
+        resetSpeed() {
+          this.animationConfig = {
+            moveSpeed: 0.15,
+            moveEase: "power3.out",
+            mergeSpeed: 0.12,
+            mergeScale: 1.15,
+            mergeEase: "power2.inOut",
+            arrivalSpeed: 0.12,
+            arrivalScale: 1.08,
+            arrivalEase: "power2.out",
+            newTileDelay: 100,
+          };
         }
       }
 
