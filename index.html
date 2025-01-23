@@ -312,29 +312,6 @@
         letter-spacing: 1px;
       }
 
-      .score-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .clear-scores-button {
-        background: #8f7a66;
-        color: #f9f6f2;
-        border: none;
-        padding: 5px 10px;
-        border-radius: 3px;
-        font-size: 12px;
-        cursor: pointer;
-        text-transform: uppercase;
-        transition: background-color 0.15s ease;
-      }
-
-      .clear-scores-button:hover {
-        background: #9f8a76;
-      }
-
       .score-entry {
         border: 1px solid rgba(119, 110, 101, 0.2);
         border-radius: 4px;
@@ -941,10 +918,7 @@
           const scores = this.getStoredScores();
 
           scoreListElement.innerHTML =
-            "<div class='score-header'>" +
-            "<strong>Recent Scores:</strong>" +
-            "<button class='clear-scores-button'>Clear History</button>" +
-            "</div><br>" +
+            "<strong>Recent Scores:</strong><br><br>" +
             scores
               .map((item) => {
                 if (typeof item === "object" && item.score !== undefined) {
@@ -958,15 +932,6 @@
                 return `<div class="score-entry">${item} (old format)</div>`;
               })
               .join("");
-
-          // Add click handler for the clear button
-          const clearButton = scoreListElement.querySelector(
-            ".clear-scores-button"
-          );
-          clearButton.addEventListener("click", () => {
-            localStorage.removeItem("game2048Scores");
-            this.updateScoreList();
-          });
         }
 
         checkGameOver() {
