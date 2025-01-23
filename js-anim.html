@@ -204,6 +204,7 @@
         }
 
         setupControls() {
+          // Keyboard controls
           document.addEventListener("keydown", (e) => {
             if (this.isMoving) return;
             const directions = {
@@ -214,6 +215,68 @@
             };
             if (directions[e.keyCode]) this.move(directions[e.keyCode]);
           });
+
+          // Touch controls
+          let touchStartX = 0;
+          let touchStartY = 0;
+          let touchEndX = 0;
+          let touchEndY = 0;
+
+          document.addEventListener(
+            "touchstart",
+            (e) => {
+              touchStartX = e.touches[0].clientX;
+              touchStartY = e.touches[0].clientY;
+            },
+            { passive: true }
+          );
+
+          document.addEventListener(
+            "touchmove",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+
+          document.addEventListener(
+            "touchend",
+            (e) => {
+              if (this.isMoving) return;
+
+              touchEndX = e.changedTouches[0].clientX;
+              touchEndY = e.changedTouches[0].clientY;
+
+              const deltaX = touchEndX - touchStartX;
+              const deltaY = touchEndY - touchStartY;
+              const minSwipeDistance = 30; // minimum swipe distance in pixels
+
+              if (
+                Math.abs(deltaX) < minSwipeDistance &&
+                Math.abs(deltaY) < minSwipeDistance
+              ) {
+                return; // Ignore small movements
+              }
+
+              // Determine if the swipe is more horizontal or vertical
+              if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                // Horizontal swipe
+                if (deltaX > 0) {
+                  this.move("right");
+                } else {
+                  this.move("left");
+                }
+              } else {
+                // Vertical swipe
+                if (deltaY > 0) {
+                  this.move("down");
+                } else {
+                  this.move("up");
+                }
+              }
+            },
+            { passive: true }
+          );
         }
 
         move(direction) {
