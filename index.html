@@ -16,39 +16,39 @@
         margin: 0;
         background: #faf8ef;
         font-family: Arial, sans-serif;
+        -webkit-text-size-adjust: none; /* Prevent iOS font scaling */
       }
 
       #game-board {
-        width: 90%;
-        height: 90vmin;
-        max-width: 500px;
-        max-height: 500px;
+        width: min(92vmin, 500px); /* Reduced from 90% to be more compact */
+        height: min(92vmin, 500px);
         background: #bbada0;
-        border-radius: 1.5vmin;
-        padding: 15px;
+        border-radius: 3px;
+        padding: 12px; /* Reduced padding */
         position: relative;
         margin: auto;
         box-sizing: border-box;
+        touch-action: none; /* Prevent unwanted scrolling/zooming */
       }
 
       .grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         grid-template-rows: repeat(4, 1fr);
-        gap: 15px;
+        gap: 10px; /* Reduced gap from 15px */
         width: 100%;
         height: 100%;
         position: relative;
         z-index: 1;
         box-sizing: border-box;
-        transform: translateZ(0); /* Force GPU acceleration */
+        transform: translateZ(0);
         backface-visibility: hidden;
         perspective: 1000px;
       }
 
       .cell {
-        background: rgba(238, 228, 218, 0.55);
-        border-radius: 1.5vmin;
+        background: rgba(238, 228, 218, 0.35);
+        border-radius: 3px;
         position: relative;
         z-index: 1;
         width: 100%;
@@ -59,20 +59,25 @@
       .tile {
         width: 100%;
         height: 100%;
-        border-radius: 1.5vmin;
+        border-radius: 3px;
         display: flex;
         justify-content: center;
         align-items: center;
-        font-size: calc(3.5vmin);
+        font-size: clamp(
+          24px,
+          8vmin,
+          42px
+        ); /* Increased base, relative, and max sizes */
         font-weight: bold;
         color: #776e65;
         z-index: 2;
         position: absolute;
         left: 0;
         top: 0;
-        transform: translateZ(0); /* Force GPU acceleration */
+        transform: translateZ(0);
         backface-visibility: hidden;
         will-change: transform;
+        user-select: none;
       }
 
       .tile[data-value="2"] {
@@ -97,30 +102,44 @@
         color: #f9f6f2;
         background: #f65e3b;
       }
+      .tile[data-value="128"],
+      .tile[data-value="256"],
+      .tile[data-value="512"] {
+        font-size: clamp(
+          20px,
+          7vmin,
+          38px
+        ); /* Increased sizes for 3-digit numbers */
+      }
+      .tile[data-value="1024"],
+      .tile[data-value="2048"] {
+        font-size: clamp(
+          18px,
+          6vmin,
+          34px
+        ); /* Increased sizes for 4-digit numbers */
+      }
+
+      /* Add color back for larger numbers */
       .tile[data-value="128"] {
         color: #f9f6f2;
         background: #edcf72;
-        font-size: calc(3vmin);
       }
       .tile[data-value="256"] {
         color: #f9f6f2;
         background: #edcc61;
-        font-size: calc(3vmin);
       }
       .tile[data-value="512"] {
         color: #f9f6f2;
         background: #edc850;
-        font-size: calc(3vmin);
       }
       .tile[data-value="1024"] {
         color: #f9f6f2;
         background: #edc53f;
-        font-size: calc(2.5vmin);
       }
       .tile[data-value="2048"] {
         color: #f9f6f2;
         background: #edc22e;
-        font-size: calc(2.5vmin);
       }
     </style>
   </head>
@@ -135,25 +154,37 @@
           // Animation speed controls
           this.animationConfig = {
             // Main movement animation
-            moveSpeed: 0.15, // Reduced from 0.2 for snappier response
-            moveEase: "power2.out", // Changed from back.out for better performance
+            moveSpeed: 0.12, // Further reduced for snappier movement
+            moveEase: "power1.out", // Simplified easing for better performance
 
             // Merge animation
-            mergeSpeed: 0.1, // Reduced from 0.12
-            mergeScale: 1.12, // Reduced scale for smoother merging
-            mergeEase: "power1.out", // Simplified easing
+            mergeSpeed: 0.08, // Faster merge
+            mergeScale: 1.08, // Smaller scale for smoother merging
+            mergeEase: "sine.out", // Simpler easing function
 
             // New tile and arrival animations
-            arrivalSpeed: 0.15, // Reduced from 0.3
-            arrivalScale: 1.05, // Reduced bounce effect
-            arrivalEase: "power1.out", // Simplified easing
+            arrivalSpeed: 0.1, // Faster arrival
+            arrivalScale: 1.03, // Subtler scale effect
+            arrivalEase: "sine.out", // Simpler easing
 
             // Delay before adding new tile
-            newTileDelay: 80, // Reduced from 100 for faster response
+            newTileDelay: 50, // Reduced delay for faster response
           };
 
-          // Add transform-style property for better performance
-          document.querySelector(".grid").style.willChange = "transform";
+          // Cache DOM queries for better performance
+          this.gridElement = document.querySelector(".grid");
+          this.gridElement.style.willChange = "transform";
+
+          // Pre-calculate cell dimensions
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          this.gridElement.appendChild(cell);
+          this.cellDimensions = {
+            width: cell.offsetWidth,
+            height: cell.offsetHeight,
+            gap: 10, // Match the new CSS gap value
+          };
+          this.gridElement.removeChild(cell);
 
           this.cellCount = 4;
           this.grid = Array(4)
@@ -202,8 +233,9 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          // Add GPU acceleration hints
+          // Optimize GPU hints
           tile.style.willChange = "transform";
+          tile.style.transform = "translate3d(0,0,0)";
           tile.style.backfaceVisibility = "hidden";
 
           const cell = document.querySelector(
@@ -214,16 +246,17 @@
 
           gsap.from(tile, {
             scale: 0,
-            duration: 0.3, // Reduced from 0.4
-            ease: "back.out(1.5)", // Reduced overshoot
+            duration: 0.2, // Faster initial appearance
+            ease: "back.out(1.2)", // Reduced overshoot
+            force3D: true,
             onComplete: () => {
               gsap.to(tile, {
-                scale: 1.03, // Reduced scale
+                scale: 1.02, // Subtler pop effect
                 yoyo: true,
-                duration: 0.08, // Faster pop effect
-                delay: 0, // Removed delay
+                duration: 0.06,
                 repeat: 1,
-                ease: "power1.inOut",
+                ease: "sine.inOut",
+                force3D: true,
               });
             },
           });
@@ -397,12 +430,13 @@
           this.tiles.delete(key);
           this.grid[fromY][fromX] = 0;
 
-          const cellWidth = document.querySelector(".cell").offsetWidth;
-          const cellHeight = document.querySelector(".cell").offsetHeight;
-          const gap = 15;
-
-          const moveX = (toX - fromX) * (cellWidth + gap);
-          const moveY = (toY - fromY) * (cellHeight + gap);
+          // Use cached cell dimensions
+          const moveX =
+            (toX - fromX) *
+            (this.cellDimensions.width + this.cellDimensions.gap);
+          const moveY =
+            (toY - fromY) *
+            (this.cellDimensions.height + this.cellDimensions.gap);
 
           if (this.grid[toY][toX] > 0) {
             const mergedTile = this.tiles.get(`${toX},${toY}`);
@@ -412,7 +446,8 @@
               yoyo: true,
               repeat: 1,
               ease: this.animationConfig.mergeEase,
-              force3D: true, // Force GPU acceleration
+              force3D: true,
+              overwrite: true, // Prevent animation conflicts
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -428,15 +463,20 @@
             `.cell[data-x="${toX}"][data-y="${toY}"]`
           );
 
-          // Main movement animation
           gsap.to(tile, {
             x: moveX,
             y: moveY,
             duration: this.animationConfig.moveSpeed,
             ease: this.animationConfig.moveEase,
-            force3D: true, // Force GPU acceleration
+            force3D: true,
+            overwrite: true,
             onComplete: () => {
-              gsap.set(tile, { x: 0, y: 0, clearProps: "transform" }); // Clear transform after animation
+              gsap.set(tile, {
+                x: 0,
+                y: 0,
+                clearProps: "transform",
+                force3D: true,
+              });
               newCell.appendChild(tile);
 
               gsap.from(tile, {
@@ -444,6 +484,7 @@
                 duration: this.animationConfig.arrivalSpeed,
                 ease: this.animationConfig.arrivalEase,
                 force3D: true,
+                overwrite: true,
               });
             },
           });
@@ -470,15 +511,15 @@
         // Reset to default speeds
         resetSpeed() {
           this.animationConfig = {
-            moveSpeed: 0.15,
-            moveEase: "power3.out",
-            mergeSpeed: 0.12,
-            mergeScale: 1.15,
-            mergeEase: "power2.inOut",
-            arrivalSpeed: 0.12,
-            arrivalScale: 1.08,
-            arrivalEase: "power2.out",
-            newTileDelay: 100,
+            moveSpeed: 0.12,
+            moveEase: "power1.out",
+            mergeSpeed: 0.08,
+            mergeScale: 1.08,
+            mergeEase: "sine.out",
+            arrivalSpeed: 0.1,
+            arrivalScale: 1.03,
+            arrivalEase: "sine.out",
+            newTileDelay: 50,
           };
         }
       }
