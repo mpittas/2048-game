@@ -202,6 +202,83 @@
       .reset-button:hover {
         background: #9f8a76;
       }
+
+      /* Add these styles for the confirmation modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: #faf8ef;
+        padding: 25px;
+        border-radius: 5px;
+        text-align: center;
+        transform: scale(0.8);
+        transition: all 0.2s ease;
+      }
+
+      .modal-overlay.active .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-title {
+        color: #776e65;
+        font-size: clamp(16px, 4vmin, 24px);
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .modal-button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 3px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: clamp(12px, 3vmin, 16px);
+        text-transform: uppercase;
+        transition: background-color 0.15s ease;
+      }
+
+      .modal-button.confirm {
+        background: #8f7a66;
+        color: #f9f6f2;
+      }
+
+      .modal-button.confirm:hover {
+        background: #9f8a76;
+      }
+
+      .modal-button.cancel {
+        background: #f2e8dc;
+        color: #776e65;
+      }
+
+      .modal-button.cancel:hover {
+        background: #e8d8c8;
+      }
     </style>
   </head>
   <body>
@@ -212,6 +289,16 @@
       </div>
       <button class="reset-button">New Game</button>
       <div class="grid"></div>
+    </div>
+
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title">Start new game?</div>
+        <div class="modal-buttons">
+          <button class="modal-button cancel">Cancel</button>
+          <button class="modal-button confirm">Confirm</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -266,11 +353,25 @@
 
           this.setupControls();
 
-          // Add reset button handler
+          // Add reset button handler with confirmation
           document
             .querySelector(".reset-button")
             .addEventListener("click", () => {
+              this.showConfirmation();
+            });
+
+          // Add modal button handlers
+          document
+            .querySelector(".modal-button.confirm")
+            .addEventListener("click", () => {
+              this.hideConfirmation();
               this.resetSpeed();
+            });
+
+          document
+            .querySelector(".modal-button.cancel")
+            .addEventListener("click", () => {
+              this.hideConfirmation();
             });
         }
 
@@ -714,6 +815,15 @@
 
           // Start new game if no valid saved state
           this.initNewGame();
+        }
+
+        // Add these methods to handle the confirmation modal
+        showConfirmation() {
+          document.querySelector(".modal-overlay").classList.add("active");
+        }
+
+        hideConfirmation() {
+          document.querySelector(".modal-overlay").classList.remove("active");
         }
       }
 
