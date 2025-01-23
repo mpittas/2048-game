@@ -141,10 +141,55 @@
         color: #f9f6f2;
         background: #edc22e;
       }
+
+      .score-container {
+        position: absolute;
+        top: -60px;
+        right: 0;
+        background: #bbada0;
+        padding: 15px 25px;
+        border-radius: 3px;
+        color: white;
+        font-size: clamp(16px, 4vmin, 24px);
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .score-label {
+        color: #eee4da;
+        text-transform: uppercase;
+        font-size: clamp(12px, 3vmin, 16px);
+        margin-bottom: 5px;
+      }
+
+      .score-addition {
+        position: absolute;
+        right: 30px;
+        top: 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: clamp(14px, 3.5vmin, 20px);
+        animation: score-pop 0.6s ease-in-out;
+        opacity: 0;
+      }
+
+      @keyframes score-pop {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="game-board">
+      <div class="score-container">
+        <div class="score-label">score</div>
+        <div class="score-number">0</div>
+      </div>
       <div class="grid"></div>
     </div>
 
@@ -192,6 +237,8 @@
             .map(() => Array(4).fill(0));
           this.tiles = new Map();
           this.isMoving = false;
+          this.score = 0;
+          this.scoreElement = document.querySelector(".score-number");
           this.initBoard();
           this.addNewTile();
           this.addNewTile();
@@ -450,6 +497,9 @@
                 mergedTile.remove();
               },
             });
+
+            // Update score with the actual merged tile value
+            this.updateScore(value);
           }
 
           this.grid[toY][toX] = value;
@@ -516,6 +566,30 @@
             arrivalEase: "power2.out",
             newTileDelay: 100,
           };
+          // Reset score when resetting game
+          this.score = 0;
+          this.scoreElement.textContent = "0";
+        }
+
+        // Add this new method
+        updateScore(addition) {
+          this.score += addition;
+          this.scoreElement.textContent = this.score;
+
+          // Show score addition animation
+          if (addition > 0) {
+            const scoreAddition = document.createElement("div");
+            scoreAddition.className = "score-addition";
+            scoreAddition.textContent = "+" + addition;
+            document
+              .querySelector(".score-container")
+              .appendChild(scoreAddition);
+
+            // Remove the element after animation
+            setTimeout(() => {
+              scoreAddition.remove();
+            }, 600);
+          }
         }
       }
 
