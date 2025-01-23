@@ -45,8 +45,8 @@
 
       .tile {
         position: absolute;
-        width: 90px;
-        height: 90px;
+        width: 92px;
+        height: 92px;
         border-radius: 3px;
         display: flex;
         justify-content: center;
@@ -55,6 +55,7 @@
         font-weight: bold;
         color: #776e65;
         z-index: 2;
+        transform: translate(-1px, -1px);
       }
 
       .tile[data-value="2"] {
@@ -117,7 +118,7 @@
           this.boardSize = 420;
           this.cellCount = 4;
           this.cellGap = 15;
-          this.tileSize = 90;
+          this.tileSize = 92;
 
           this.grid = Array(4)
             .fill()
@@ -161,8 +162,8 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
-          const posX = this.cellGap + x * (this.tileSize + this.cellGap);
-          const posY = this.cellGap + y * (this.tileSize + this.cellGap);
+          const posX = this.cellGap + x * (90 + this.cellGap) - 1;
+          const posY = this.cellGap + y * (90 + this.cellGap) - 1;
           tile.style.left = posX + "px";
           tile.style.top = posY + "px";
 
@@ -171,14 +172,24 @@
 
           gsap.from(tile, {
             scale: 0,
-            duration: 0.15,
-            ease: "back.out",
+            duration: 0.4,
+            ease: "back.out(2.5)",
+            onComplete: () => {
+              gsap.to(tile, {
+                opacity: 0.8,
+                yoyo: true,
+                duration: 0.1,
+                delay: 0.02,
+                repeat: 3,
+                ease: "power3.inOut",
+              });
+            },
           });
         }
 
         updateTilePosition(tile, x, y) {
-          const posX = this.cellGap + x * (this.tileSize + this.cellGap);
-          const posY = this.cellGap + y * (this.tileSize + this.cellGap);
+          const posX = this.cellGap + x * (90 + this.cellGap) - 1;
+          const posY = this.cellGap + y * (90 + this.cellGap) - 1;
 
           gsap.to(tile, {
             left: posX + "px",
