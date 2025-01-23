@@ -221,22 +221,17 @@
           let touchStartY = 0;
           let touchEndX = 0;
           let touchEndY = 0;
+          let minSwipeDistance = 20; // Reduced from 30 to make it more responsive
+          let touchStartTime = 0;
 
           document.addEventListener(
             "touchstart",
             (e) => {
               touchStartX = e.touches[0].clientX;
               touchStartY = e.touches[0].clientY;
+              touchStartTime = Date.now();
             },
             { passive: true }
-          );
-
-          document.addEventListener(
-            "touchmove",
-            (e) => {
-              e.preventDefault();
-            },
-            { passive: false }
           );
 
           document.addEventListener(
@@ -246,36 +241,43 @@
 
               touchEndX = e.changedTouches[0].clientX;
               touchEndY = e.changedTouches[0].clientY;
+              const touchDuration = Date.now() - touchStartTime;
 
               const deltaX = touchEndX - touchStartX;
               const deltaY = touchEndY - touchStartY;
-              const minSwipeDistance = 30; // minimum swipe distance in pixels
 
+              // Ignore if touch duration is too long (prevents accidental moves)
+              if (touchDuration > 500) return;
+
+              // Calculate swipe velocity
+              const velocity =
+                Math.sqrt(deltaX * deltaX + deltaY * deltaY) / touchDuration;
+
+              // More responsive movement detection
               if (
-                Math.abs(deltaX) < minSwipeDistance &&
-                Math.abs(deltaY) < minSwipeDistance
+                velocity > 0.2 ||
+                Math.abs(deltaX) > minSwipeDistance ||
+                Math.abs(deltaY) > minSwipeDistance
               ) {
-                return; // Ignore small movements
-              }
-
-              // Determine if the swipe is more horizontal or vertical
-              if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                // Horizontal swipe
-                if (deltaX > 0) {
-                  this.move("right");
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                  // Horizontal swipe
+                  this.move(deltaX > 0 ? "right" : "left");
                 } else {
-                  this.move("left");
-                }
-              } else {
-                // Vertical swipe
-                if (deltaY > 0) {
-                  this.move("down");
-                } else {
-                  this.move("up");
+                  // Vertical swipe
+                  this.move(deltaY > 0 ? "down" : "up");
                 }
               }
             },
             { passive: true }
+          );
+
+          // Remove touchmove handler since we're not using it
+          document.addEventListener(
+            "touchmove",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
           );
         }
 
