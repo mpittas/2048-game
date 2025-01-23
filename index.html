@@ -41,6 +41,9 @@
         position: relative;
         z-index: 1;
         box-sizing: border-box;
+        transform: translateZ(0); /* Force GPU acceleration */
+        backface-visibility: hidden;
+        perspective: 1000px;
       }
 
       .cell {
@@ -67,6 +70,9 @@
         position: absolute;
         left: 0;
         top: 0;
+        transform: translateZ(0); /* Force GPU acceleration */
+        backface-visibility: hidden;
+        will-change: transform;
       }
 
       .tile[data-value="2"] {
@@ -129,22 +135,25 @@
           // Animation speed controls
           this.animationConfig = {
             // Main movement animation
-            moveSpeed: 0.2, // Duration of tile sliding
-            moveEase: "back.out(1.1)", // Easing function for movement
+            moveSpeed: 0.15, // Reduced from 0.2 for snappier response
+            moveEase: "power2.out", // Changed from back.out for better performance
 
             // Merge animation
-            mergeSpeed: 0.12, // Duration of merge animation
-            mergeScale: 1.15, // How much tile scales when merging
-            mergeEase: "power2.inOut", // Easing for merge animation
+            mergeSpeed: 0.1, // Reduced from 0.12
+            mergeScale: 1.12, // Reduced scale for smoother merging
+            mergeEase: "power1.out", // Simplified easing
 
             // New tile and arrival animations
-            arrivalSpeed: 0.3, // Duration of bounce animation when tile arrives
-            arrivalScale: 1.08, // How much tile scales on arrival
-            arrivalEase: "power2.out", // Easing for arrival animation
+            arrivalSpeed: 0.15, // Reduced from 0.3
+            arrivalScale: 1.05, // Reduced bounce effect
+            arrivalEase: "power1.out", // Simplified easing
 
             // Delay before adding new tile
-            newTileDelay: 100, // Milliseconds to wait before adding new tile
+            newTileDelay: 80, // Reduced from 100 for faster response
           };
+
+          // Add transform-style property for better performance
+          document.querySelector(".grid").style.willChange = "transform";
 
           this.cellCount = 4;
           this.grid = Array(4)
@@ -193,6 +202,10 @@
           tile.textContent = value;
           tile.dataset.value = value;
 
+          // Add GPU acceleration hints
+          tile.style.willChange = "transform";
+          tile.style.backfaceVisibility = "hidden";
+
           const cell = document.querySelector(
             `.cell[data-x="${x}"][data-y="${y}"]`
           );
@@ -201,16 +214,16 @@
 
           gsap.from(tile, {
             scale: 0,
-            duration: 0.4,
-            ease: "back.out(2.5)",
+            duration: 0.3, // Reduced from 0.4
+            ease: "back.out(1.5)", // Reduced overshoot
             onComplete: () => {
               gsap.to(tile, {
-                scale: 1.05,
+                scale: 1.03, // Reduced scale
                 yoyo: true,
-                duration: 0.1,
-                delay: 0.02,
+                duration: 0.08, // Faster pop effect
+                delay: 0, // Removed delay
                 repeat: 1,
-                ease: "power3.inOut",
+                ease: "power1.inOut",
               });
             },
           });
@@ -399,6 +412,7 @@
               yoyo: true,
               repeat: 1,
               ease: this.animationConfig.mergeEase,
+              force3D: true, // Force GPU acceleration
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -414,19 +428,22 @@
             `.cell[data-x="${toX}"][data-y="${toY}"]`
           );
 
+          // Main movement animation
           gsap.to(tile, {
             x: moveX,
             y: moveY,
             duration: this.animationConfig.moveSpeed,
             ease: this.animationConfig.moveEase,
+            force3D: true, // Force GPU acceleration
             onComplete: () => {
-              gsap.set(tile, { x: 0, y: 0 });
+              gsap.set(tile, { x: 0, y: 0, clearProps: "transform" }); // Clear transform after animation
               newCell.appendChild(tile);
 
               gsap.from(tile, {
                 scale: this.animationConfig.arrivalScale,
                 duration: this.animationConfig.arrivalSpeed,
                 ease: this.animationConfig.arrivalEase,
+                force3D: true,
               });
             },
           });
