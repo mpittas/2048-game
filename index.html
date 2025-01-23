@@ -335,7 +335,7 @@
               this.cleanupTiles();
               this.addNewTile();
               this.isMoving = false;
-            }, 150);
+            }, 100);
           } else {
             this.isMoving = false;
           }
@@ -373,13 +373,14 @@
           const moveY = (toY - fromY) * (cellHeight + gap);
 
           if (this.grid[toY][toX] > 0) {
+            // Enhance merge animation
             const mergedTile = this.tiles.get(`${toX},${toY}`);
             gsap.to(mergedTile, {
-              scale: 1.2,
-              duration: 0.1,
+              scale: 1.15,
+              duration: 0.12,
               yoyo: true,
               repeat: 1,
-              ease: "bounce.out",
+              ease: "power2.inOut",
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -395,21 +396,20 @@
             `.cell[data-x="${toX}"][data-y="${toY}"]`
           );
 
+          // Main movement animation
           gsap.to(tile, {
             x: moveX,
             y: moveY,
-            scale: 1.1,
             duration: 0.15,
-            ease: "power1.out",
+            ease: "power3.out",
             onComplete: () => {
-              // Reset position and move to new cell
               gsap.set(tile, { x: 0, y: 0 });
               newCell.appendChild(tile);
 
-              gsap.to(tile, {
-                scale: 1,
-                duration: 0.1,
-                ease: "back.out(1.25)",
+              gsap.from(tile, {
+                scale: 1.08,
+                duration: 0.12,
+                ease: "power2.out",
               });
             },
           });
