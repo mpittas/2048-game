@@ -240,8 +240,15 @@
 
       .modal-title {
         color: #776e65;
-        font-size: clamp(16px, 4vmin, 24px);
+        font-size: 24px;
         margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      .modal-score {
+        color: #776e65;
+        font-size: 20px;
+        margin: 15px 0;
         font-weight: bold;
       }
 
@@ -288,12 +295,56 @@
         font-size: 14px;
         font-family: Arial, sans-serif;
         z-index: 999;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 15px;
-        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        border-radius: 6px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         max-width: 300px;
-        line-height: 1.5;
+        line-height: 1.6;
+      }
+
+      .score-list strong {
+        font-size: 16px;
+        color: #8f7a66;
+        display: block;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .score-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .clear-scores-button {
+        background: #8f7a66;
+        color: #f9f6f2;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        font-size: 12px;
+        cursor: pointer;
+        text-transform: uppercase;
+        transition: background-color 0.15s ease;
+      }
+
+      .clear-scores-button:hover {
+        background: #9f8a76;
+      }
+
+      .score-entry {
+        border: 1px solid rgba(119, 110, 101, 0.2);
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 8px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .score-entry:last-child {
+        margin-bottom: 0;
       }
     </style>
   </head>
@@ -364,6 +415,7 @@
           this.isMoving = false;
           this.score = 0;
           this.scoreElement = document.querySelector(".score-number");
+          this.isGameFinished = false; // Add this new flag
 
           // Load saved state or start new game
           this.loadGame();
@@ -544,6 +596,9 @@
         }
 
         move(direction) {
+          // Don't allow moves if game is finished
+          if (this.isGameFinished) return;
+
           this.isMoving = true;
           let moved = false;
           const newGrid = Array(4)
@@ -729,10 +784,13 @@
 
         // New method to handle game reset
         resetGame() {
-          // Save current score if it's not zero
-          if (this.score > 0) {
+          // Save current score if it's not zero and game isn't already finished
+          if (this.score > 0 && !this.isGameFinished) {
             this.saveScore();
           }
+
+          // Reset the game finished flag
+          this.isGameFinished = false;
 
           // Clear saved state
           localStorage.removeItem("game2048");
@@ -882,26 +940,41 @@
           const scoreListElement = document.querySelector(".score-list");
           const scores = this.getStoredScores();
 
-          // Add debug logging
-          console.log("Stored scores:", scores);
-
           scoreListElement.innerHTML =
-            "<strong>Recent Scores:</strong><br>" +
+            "<div class='score-header'>" +
+            "<strong>Recent Scores:</strong>" +
+            "<button class='clear-scores-button'>Clear History</button>" +
+            "</div><br>" +
             scores
               .map((item) => {
                 if (typeof item === "object" && item.score !== undefined) {
-                  return `${item.score} (${item.timestamp})`;
+                  return `<div class="score-entry">
+                        <span style="font-size: 16px; font-weight: bold; color: #776e65;">
+                            ${item.score} <span style="font-weight: normal; font-size: 14px;">points</span>
+                        </span>
+                        <br><span style="color: #a9a9a9; font-size: 12px;">${item.timestamp}</span>
+                    </div>`;
                 }
-                return `${item} (old format)`;
+                return `<div class="score-entry">${item} (old format)</div>`;
               })
-              .join("<br>");
+              .join("");
+
+          // Add click handler for the clear button
+          const clearButton = scoreListElement.querySelector(
+            ".clear-scores-button"
+          );
+          clearButton.addEventListener("click", () => {
+            localStorage.removeItem("game2048Scores");
+            this.updateScoreList();
+          });
         }
 
         checkGameOver() {
           if (this.isGameOver()) {
-            // Save the score
-            if (this.score > 0) {
+            // Only save score if game just ended
+            if (!this.isGameFinished && this.score > 0) {
               this.saveScore();
+              this.isGameFinished = true;
             }
           }
         }
@@ -925,7 +998,32 @@
             }
           }
 
+          // If we get here, game is over - show the modal
+          this.showGameOverModal();
           return true;
+        }
+
+        showGameOverModal() {
+          const modalOverlay = document.querySelector(".modal-overlay");
+          const modalContent = modalOverlay.querySelector(".modal-content");
+          modalContent.innerHTML = `
+            <div class="modal-title">Game Over!</div>
+            <div class="modal-score">Final Score: ${this.score}</div>
+            <div class="modal-buttons">
+                <button class="modal-button confirm">New Game</button>
+            </div>
+          `;
+
+          modalOverlay.classList.add("active");
+
+          // Add click handler for the new game button
+          const newGameButton = modalContent.querySelector(
+            ".modal-button.confirm"
+          );
+          newGameButton.addEventListener("click", () => {
+            modalOverlay.classList.remove("active");
+            this.resetSpeed();
+          });
         }
       }
 
