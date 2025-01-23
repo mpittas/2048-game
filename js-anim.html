@@ -15,10 +15,10 @@
       }
 
       #game-board {
-        width: 420px;
-        height: 420px;
+        width: 405px;
+        height: 405px;
         background: #bbada0;
-        border-radius: 5px;
+        border-radius: 8px;
         padding: 15px;
         position: relative;
       }
@@ -36,7 +36,7 @@
 
       .cell {
         background: rgba(238, 228, 218, 0.35);
-        border-radius: 3px;
+        border-radius: 8px;
         position: relative;
         z-index: 1;
         width: 90px;
@@ -47,7 +47,7 @@
         position: absolute;
         width: 92px;
         height: 92px;
-        border-radius: 3px;
+        border-radius: 8px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -298,10 +298,11 @@
           if (this.grid[toY][toX] > 0) {
             const mergedTile = this.tiles.get(`${toX},${toY}`);
             gsap.to(mergedTile, {
-              scale: 1.1,
+              scale: 1.2,
               duration: 0.1,
               yoyo: true,
               repeat: 1,
+              ease: "bounce.out",
               onComplete: () => {
                 mergedTile.remove();
               },
@@ -312,7 +313,21 @@
           tile.textContent = value;
           tile.dataset.value = value;
           this.tiles.set(`${toX},${toY}`, tile);
-          this.updateTilePosition(tile, toX, toY);
+
+          // Add bounce effect during movement
+          gsap.to(tile, {
+            scale: 1.1,
+            duration: 0.15,
+            ease: "power1.out",
+          });
+
+          gsap.to(tile, {
+            left: this.cellGap + toX * (90 + this.cellGap) - 1 + "px",
+            top: this.cellGap + toY * (90 + this.cellGap) - 1 + "px",
+            scale: 1,
+            duration: 0.2,
+            ease: "back.out(1.25c)",
+          });
         }
 
         cleanupTiles() {
