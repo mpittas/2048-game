@@ -7,25 +7,33 @@ import {
 
 class Game2048 {
   constructor() {
-    // Animation speed controls
+    // Optimize animation config for better performance
     this.animationConfig = {
-      // Main movement animation
-      moveSpeed: 0.15, // Back to slightly longer duration for smoothness
-      moveEase: "power2.out", // Back to power2 for smoother deceleration
+      // Reduce animation durations for better performance
+      moveSpeed: 0.12, // Slightly faster movement
+      moveEase: "power1.out", // Simpler easing function
 
-      // Merge animation
-      mergeSpeed: 0.12, // Back to original merge speed
-      mergeScale: 1.15, // Original scale for better visibility
-      mergeEase: "power2.inOut", // Back to power2 for smoother merge
+      // Simplified merge animation
+      mergeSpeed: 0.1,
+      mergeScale: 1.1, // Reduced scale for better performance
+      mergeEase: "power1.out",
 
-      // New tile and arrival animations
-      arrivalSpeed: 0.15, // Back to original arrival speed
-      arrivalScale: 1.08, // Original scale for better feedback
-      arrivalEase: "power2.out", // Back to power2 for smoother arrival
+      // Simplified arrival animation
+      arrivalSpeed: 0.1,
+      arrivalScale: 1.05,
+      arrivalEase: "power1.out",
 
-      // Delay before adding new tile
-      newTileDelay: 100, // Back to original delay for smoother sequence
+      // Reduced delay
+      newTileDelay: 50, // Faster tile spawn
     };
+
+    // Force GPU acceleration for the game board
+    this.gridElement = document.querySelector(".grid");
+    gsap.set(this.gridElement, {
+      willChange: "transform",
+      force3D: true,
+      backfaceVisibility: "hidden",
+    });
 
     // Cache DOM queries for better performance
     this.gridElement = document.querySelector(".grid");
@@ -114,30 +122,23 @@ class Game2048 {
     tile.textContent = value;
     tile.dataset.value = value;
 
-    // Optimize GPU hints but keep it simpler
-    tile.style.willChange = "transform";
-    tile.style.backfaceVisibility = "hidden";
+    // Optimize tile rendering
+    gsap.set(tile, {
+      willChange: "transform",
+      force3D: true,
+      backfaceVisibility: "hidden",
+    });
 
     const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
     cell.appendChild(tile);
     this.tiles.set(`${x},${y}`, tile);
 
-    // Ensure the animation is smooth and noticeable
+    // Simplified appear animation
     gsap.from(tile, {
       scale: 0,
-      duration: 0.3, // Ensure this duration is long enough to be visible
-      ease: "back.out(1.5)",
+      duration: this.animationConfig.arrivalSpeed,
+      ease: this.animationConfig.arrivalEase,
       force3D: true,
-      onComplete: () => {
-        gsap.to(tile, {
-          scale: 1.05,
-          yoyo: true,
-          duration: 0.1,
-          repeat: 1,
-          ease: "power2.inOut",
-          force3D: true,
-        });
-      },
     });
   }
 
@@ -320,7 +321,6 @@ class Game2048 {
     this.tiles.delete(key);
     this.grid[fromY][fromX] = 0;
 
-    // Use cached cell dimensions
     const moveX =
       (toX - fromX) * (this.cellDimensions.width + this.cellDimensions.gap);
     const moveY =
@@ -328,11 +328,11 @@ class Game2048 {
 
     if (this.grid[toY][toX] > 0) {
       const mergedTile = this.tiles.get(`${toX},${toY}`);
+
+      // Simplified merge animation
       gsap.to(mergedTile, {
         scale: this.animationConfig.mergeScale,
         duration: this.animationConfig.mergeSpeed,
-        yoyo: true,
-        repeat: 1,
         ease: this.animationConfig.mergeEase,
         force3D: true,
         onComplete: () => {
@@ -340,7 +340,6 @@ class Game2048 {
         },
       });
 
-      // Update score when tiles merge
       this.updateScore(value);
     }
 
@@ -353,27 +352,16 @@ class Game2048 {
       `.cell[data-x="${toX}"][data-y="${toY}"]`
     );
 
+    // Optimized movement animation
     gsap.to(tile, {
       x: moveX,
       y: moveY,
       duration: this.animationConfig.moveSpeed,
       ease: this.animationConfig.moveEase,
       force3D: true,
+      clearProps: "transform",
       onComplete: () => {
-        gsap.set(tile, {
-          x: 0,
-          y: 0,
-          clearProps: "transform",
-        });
         newCell.appendChild(tile);
-
-        // Ensure the arrival animation is noticeable
-        gsap.from(tile, {
-          scale: this.animationConfig.arrivalScale,
-          duration: this.animationConfig.arrivalSpeed,
-          ease: this.animationConfig.arrivalEase,
-          force3D: true,
-        });
       },
     });
   }
@@ -399,15 +387,15 @@ class Game2048 {
   // Reset to default speeds
   resetSpeed() {
     this.animationConfig = {
-      moveSpeed: 0.15,
-      moveEase: "power2.out",
-      mergeSpeed: 0.12,
-      mergeScale: 1.15,
-      mergeEase: "power2.inOut",
-      arrivalSpeed: 0.15,
-      arrivalScale: 1.08,
-      arrivalEase: "power2.out",
-      newTileDelay: 100,
+      moveSpeed: 0.12,
+      moveEase: "power1.out",
+      mergeSpeed: 0.1,
+      mergeScale: 1.1,
+      mergeEase: "power1.out",
+      arrivalSpeed: 0.1,
+      arrivalScale: 1.05,
+      arrivalEase: "power1.out",
+      newTileDelay: 50,
     };
     this.resetGame(); // Call new reset method instead
   }
