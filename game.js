@@ -7,25 +7,41 @@ import {
 
 class Game2048 {
   constructor() {
-    // Optimize animation config for better performance
-    this.animationConfig = {
-      // Reduce animation durations for better performance
-      moveSpeed: 0.12, // Slightly faster movement
-      moveEase: "power1.out", // Simpler easing function
-
-      // Simplified merge animation
+    // Define separate configs for mobile and desktop
+    this.desktopAnimationConfig = {
+      moveSpeed: 0.12,
+      moveEase: "power1.out",
       mergeSpeed: 0.1,
-      mergeScale: 1.1, // Reduced scale for better performance
+      mergeScale: 1.1,
       mergeEase: "power1.out",
-
-      // Simplified arrival animation
       arrivalSpeed: 0.1,
       arrivalScale: 1.05,
       arrivalEase: "power1.out",
-
-      // Reduced delay
-      newTileDelay: 50, // Faster tile spawn
+      newTileDelay: 50,
     };
+
+    this.mobileAnimationConfig = {
+      moveSpeed: 0.08, // Faster movement for mobile
+      moveEase: "none", // Simpler easing for better mobile performance
+      mergeSpeed: 0.06,
+      mergeScale: 1.05, // Smaller scale effect for mobile
+      mergeEase: "none",
+      arrivalSpeed: 0.06,
+      arrivalScale: 1.03,
+      arrivalEase: "none",
+      newTileDelay: 30, // Shorter delay for mobile
+    };
+
+    // Detect if device is mobile
+    this.isMobile =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    // Set animation config based on device type
+    this.animationConfig = this.isMobile
+      ? this.mobileAnimationConfig
+      : this.desktopAnimationConfig;
 
     // Force GPU acceleration for the game board
     this.gridElement = document.querySelector(".grid");
@@ -86,6 +102,14 @@ class Game2048 {
       .addEventListener("click", () => {
         this.hideConfirmation();
       });
+
+    // Add resize listener to handle orientation changes
+    window.addEventListener("resize", () => {
+      const newIsMobile = window.innerWidth <= 768;
+      if (newIsMobile !== this.isMobile) {
+        this.setDeviceConfig(newIsMobile);
+      }
+    });
   }
 
   initBoard() {
@@ -400,28 +424,39 @@ class Game2048 {
     });
   }
 
-  // Add these methods to the Game2048 class
-  setSpeed(multiplier) {
-    this.animationConfig.moveSpeed *= multiplier;
-    this.animationConfig.mergeSpeed *= multiplier;
-    this.animationConfig.arrivalSpeed *= multiplier;
-    this.animationConfig.newTileDelay *= multiplier;
+  // Update resetSpeed method to use correct config
+  resetSpeed() {
+    this.animationConfig = this.isMobile
+      ? this.mobileAnimationConfig
+      : this.desktopAnimationConfig;
+    this.resetGame();
   }
 
-  // Reset to default speeds
-  resetSpeed() {
+  // Add method to switch between mobile/desktop configs
+  setDeviceConfig(isMobile) {
+    this.isMobile = isMobile;
+    this.animationConfig = isMobile
+      ? this.mobileAnimationConfig
+      : this.desktopAnimationConfig;
+  }
+
+  // Update setSpeed method to handle both configs
+  setSpeed(multiplier) {
+    const baseConfig = this.isMobile
+      ? this.mobileAnimationConfig
+      : this.desktopAnimationConfig;
+
     this.animationConfig = {
-      moveSpeed: 0.12,
-      moveEase: "power1.out",
-      mergeSpeed: 0.1,
-      mergeScale: 1.1,
-      mergeEase: "power1.out",
-      arrivalSpeed: 0.1,
-      arrivalScale: 1.05,
-      arrivalEase: "power1.out",
-      newTileDelay: 50,
+      moveSpeed: baseConfig.moveSpeed * multiplier,
+      moveEase: baseConfig.moveEase,
+      mergeSpeed: baseConfig.mergeSpeed * multiplier,
+      mergeScale: baseConfig.mergeScale,
+      mergeEase: baseConfig.mergeEase,
+      arrivalSpeed: baseConfig.arrivalSpeed * multiplier,
+      arrivalScale: baseConfig.arrivalScale,
+      arrivalEase: baseConfig.arrivalEase,
+      newTileDelay: baseConfig.newTileDelay * multiplier,
     };
-    this.resetGame(); // Call new reset method instead
   }
 
   // New method to handle game reset
