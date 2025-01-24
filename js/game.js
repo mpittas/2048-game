@@ -37,37 +37,6 @@ tl.to(".animated-element", {
   }
 );
 
-// Example of staggered tile animations in your game
-function animateTiles(tiles) {
-  gsap.to(tiles, {
-    scale: 1,
-    opacity: 1,
-    duration: 0.3,
-    stagger: {
-      each: 0.05,
-      from: "center",
-      grid: [4, 4],
-      ease: "power2.out",
-    },
-    willChange: "transform, opacity",
-  });
-}
-
-// Example of staggered score animation
-function animateScoreElements() {
-  gsap.from(".score-entry", {
-    y: 20,
-    opacity: 0,
-    duration: 0.4,
-    stagger: {
-      amount: 0.3,
-      from: "start",
-      ease: "back.out(1.2)",
-    },
-    willChange: "transform, opacity",
-  });
-}
-
 class Game2048 {
   constructor() {
     // Animation speed controls
