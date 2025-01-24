@@ -7,25 +7,28 @@ import {
 
 class Game2048 {
   constructor() {
-    // Optimize animation config for better performance
+    // Even more optimized animation config
     this.animationConfig = {
-      // Reduce animation durations for better performance
-      moveSpeed: 0.12, // Slightly faster movement
-      moveEase: "power1.out", // Simpler easing function
+      // Minimal durations for better performance
+      moveSpeed: 0.08, // Even faster movement
+      moveEase: "none", // Remove easing for better performance
 
-      // Simplified merge animation
-      mergeSpeed: 0.1,
-      mergeScale: 1.1, // Reduced scale for better performance
-      mergeEase: "power1.out",
+      // Remove merge animation scaling
+      mergeSpeed: 0.08,
+      mergeScale: 1.0, // No scaling
+      mergeEase: "none",
 
-      // Simplified arrival animation
-      arrivalSpeed: 0.1,
-      arrivalScale: 1.05,
-      arrivalEase: "power1.out",
+      // Minimal arrival animation
+      arrivalSpeed: 0.08,
+      arrivalScale: 1.0,
+      arrivalEase: "none",
 
-      // Reduced delay
-      newTileDelay: 50, // Faster tile spawn
+      // Minimal delay
+      newTileDelay: 30,
     };
+
+    // Batch DOM operations
+    this.pendingUpdates = new Set();
 
     // Force GPU acceleration for the game board
     this.gridElement = document.querySelector(".grid");
@@ -122,22 +125,22 @@ class Game2048 {
     tile.textContent = value;
     tile.dataset.value = value;
 
-    // Optimize tile rendering
+    // Apply transforms directly for better performance
     gsap.set(tile, {
-      willChange: "transform",
       force3D: true,
-      backfaceVisibility: "hidden",
+      z: 0,
+      scale: 0,
     });
 
     const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
     cell.appendChild(tile);
     this.tiles.set(`${x},${y}`, tile);
 
-    // Simplified appear animation
-    gsap.from(tile, {
-      scale: 0,
+    // Simple scale animation
+    gsap.to(tile, {
+      scale: 1,
       duration: this.animationConfig.arrivalSpeed,
-      ease: this.animationConfig.arrivalEase,
+      ease: "none",
       force3D: true,
     });
   }
@@ -228,8 +231,7 @@ class Game2048 {
   }
 
   move(direction) {
-    // Don't allow moves if game is finished
-    if (this.isGameFinished) return;
+    if (this.isGameFinished || this.isMoving) return;
 
     this.isMoving = true;
     let moved = false;
@@ -280,19 +282,17 @@ class Game2048 {
     }
 
     if (moved) {
-      setTimeout(() => {
-        this.cleanupTiles();
-        this.addNewTile();
-        this.isMoving = false;
-        this.saveGame();
-
-        // Check if the game is over
-        this.checkGameOver();
-      }, this.animationConfig.newTileDelay);
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          this.cleanupTiles();
+          this.addNewTile();
+          this.isMoving = false;
+          this.saveGame();
+          this.checkGameOver();
+        }, this.animationConfig.newTileDelay);
+      });
     } else {
       this.isMoving = false;
-
-      // Check if the game is over
       this.checkGameOver();
     }
   }
@@ -328,18 +328,7 @@ class Game2048 {
 
     if (this.grid[toY][toX] > 0) {
       const mergedTile = this.tiles.get(`${toX},${toY}`);
-
-      // Simplified merge animation
-      gsap.to(mergedTile, {
-        scale: this.animationConfig.mergeScale,
-        duration: this.animationConfig.mergeSpeed,
-        ease: this.animationConfig.mergeEase,
-        force3D: true,
-        onComplete: () => {
-          mergedTile.remove();
-        },
-      });
-
+      mergedTile.remove();
       this.updateScore(value);
     }
 
@@ -352,15 +341,15 @@ class Game2048 {
       `.cell[data-x="${toX}"][data-y="${toY}"]`
     );
 
-    // Optimized movement animation
+    // Simplified movement animation
     gsap.to(tile, {
       x: moveX,
       y: moveY,
       duration: this.animationConfig.moveSpeed,
-      ease: this.animationConfig.moveEase,
+      ease: "none",
       force3D: true,
-      clearProps: "transform",
       onComplete: () => {
+        tile.style.transform = "";
         newCell.appendChild(tile);
       },
     });
@@ -387,15 +376,15 @@ class Game2048 {
   // Reset to default speeds
   resetSpeed() {
     this.animationConfig = {
-      moveSpeed: 0.12,
-      moveEase: "power1.out",
-      mergeSpeed: 0.1,
-      mergeScale: 1.1,
-      mergeEase: "power1.out",
-      arrivalSpeed: 0.1,
-      arrivalScale: 1.05,
-      arrivalEase: "power1.out",
-      newTileDelay: 50,
+      moveSpeed: 0.08,
+      moveEase: "none",
+      mergeSpeed: 0.08,
+      mergeScale: 1.0,
+      mergeEase: "none",
+      arrivalSpeed: 0.08,
+      arrivalScale: 1.0,
+      arrivalEase: "none",
+      newTileDelay: 30,
     };
     this.resetGame(); // Call new reset method instead
   }
