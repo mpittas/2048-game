@@ -422,30 +422,72 @@
 
     <script>
       // Add GSAP lag smoothing to handle CPU freezes
-      gsap.ticker.lagSmoothing(500, 16);
+      gsap.ticker.lagSmoothing(721, 16);
 
-      // Replace any existing animation code with staggered animations
-      gsap.from(".animated-element", {
-        opacity: 0,
-        y: 50,
-        duration: 1,
+      // Create a timeline for animations
+      const tl = gsap.timeline({
+        defaults: { duration: 1, ease: "power2.out" },
+      });
+
+      // Add animations to the timeline
+      tl.to(".animated-element", {
+        opacity: 1,
+        y: 0,
         stagger: {
-          amount: 0.5, // Total stagger time
+          amount: 0.5,
           from: "start",
         },
-      });
+        willChange: "transform, opacity",
+      }).fromTo(
+        ".scroll-animate",
+        { opacity: 0, y: 100 },
+        {
+          opacity: 1,
+          y: 0,
+          scrollTrigger: {
+            trigger: ".scroll-animate",
+            start: "top center",
+            toggleActions: "play none none reverse",
+          },
+          stagger: {
+            each: 0.2, // Time between each element's animation
+            from: "start", // Start from the first element
+            ease: "power2.inOut", // Smooth easing for the stagger
+          },
+          willChange: "transform, opacity",
+        }
+      );
 
-      // Add ScrollTrigger for scroll-based animations
-      gsap.from(".scroll-animate", {
-        scrollTrigger: {
-          trigger: ".scroll-animate",
-          start: "top center",
-          toggleActions: "play none none reverse",
-        },
-        opacity: 0,
-        y: 100,
-        duration: 1,
-      });
+      // Example of staggered tile animations in your game
+      function animateTiles(tiles) {
+        gsap.to(tiles, {
+          scale: 1,
+          opacity: 1,
+          duration: 0.3,
+          stagger: {
+            each: 0.05, // Quick succession
+            from: "center", // Animate from the center outward
+            grid: [4, 4], // Grid-based stagger for 4x4 game board
+            ease: "power2.out",
+          },
+          willChange: "transform, opacity",
+        });
+      }
+
+      // Example of staggered score animation
+      function animateScoreElements() {
+        gsap.from(".score-entry", {
+          y: 20,
+          opacity: 0,
+          duration: 0.4,
+          stagger: {
+            amount: 0.3, // Total time to stagger all elements
+            from: "start", // Start from the top
+            ease: "back.out(1.2)",
+          },
+          willChange: "transform, opacity",
+        });
+      }
 
       class Game2048 {
         constructor() {
@@ -528,10 +570,33 @@
             const scoreList = document.querySelector(".score-list");
             if (window.innerWidth <= 768) {
               scoreList.classList.add("collapsed");
+              // Simpler animations for mobile
+              this.animationConfig.mergeScale = 1.0;
+              this.animationConfig.arrivalScale = 1.0;
+              this.animationConfig.newTileDelay = 50;
             } else {
               scoreList.classList.remove("collapsed");
+              // Reset to desktop animations
+              this.animationConfig.mergeScale = 1.15;
+              this.animationConfig.arrivalScale = 1.08;
+              this.animationConfig.newTileDelay = 100;
             }
           });
+
+          // Detect mobile and set simpler animations
+          if (window.innerWidth <= 768) {
+            this.animationConfig = {
+              moveSpeed: 0.12,
+              moveEase: "power2.out",
+              mergeSpeed: 0.1,
+              mergeScale: 1.0, // No scaling on mobile
+              mergeEase: "power2.out",
+              arrivalSpeed: 0.12,
+              arrivalScale: 1.0, // No scaling on mobile
+              arrivalEase: "power2.out",
+              newTileDelay: 50, // Faster delay for mobile
+            };
+          }
         }
 
         initBoard() {
@@ -579,22 +644,33 @@
           cell.appendChild(tile);
           this.tiles.set(`${x},${y}`, tile);
 
-          gsap.from(tile, {
-            scale: 0,
-            duration: 0.3, // Back to original duration
-            ease: "back.out(1.5)",
-            force3D: true,
-            onComplete: () => {
-              gsap.to(tile, {
-                scale: 1.05,
-                yoyo: true,
-                duration: 0.1,
-                repeat: 1,
-                ease: "power2.inOut",
-                force3D: true,
-              });
-            },
-          });
+          if (window.innerWidth <= 768) {
+            // Simple fade in for mobile
+            gsap.from(tile, {
+              opacity: 0,
+              duration: this.animationConfig.arrivalSpeed,
+              ease: this.animationConfig.arrivalEase,
+              force3D: true,
+            });
+          } else {
+            // Keep original animation for desktop
+            gsap.from(tile, {
+              scale: 0,
+              duration: 0.3,
+              ease: "back.out(1.5)",
+              force3D: true,
+              onComplete: () => {
+                gsap.to(tile, {
+                  scale: 1.05,
+                  yoyo: true,
+                  duration: 0.1,
+                  repeat: 1,
+                  ease: "power2.inOut",
+                  force3D: true,
+                });
+              },
+            });
+          }
         }
 
         updateTilePosition(tile, x, y) {
@@ -776,7 +852,6 @@
           this.tiles.delete(key);
           this.grid[fromY][fromX] = 0;
 
-          // Use cached cell dimensions
           const moveX =
             (toX - fromX) *
             (this.cellDimensions.width + this.cellDimensions.gap);
@@ -786,20 +861,20 @@
 
           if (this.grid[toY][toX] > 0) {
             const mergedTile = this.tiles.get(`${toX},${toY}`);
+
+            // Transform-based merge animation
             gsap.to(mergedTile, {
               scale: this.animationConfig.mergeScale,
               duration: this.animationConfig.mergeSpeed,
-              yoyo: true,
-              repeat: 1,
+              delay: 0.05,
               ease: this.animationConfig.mergeEase,
               force3D: true,
-              onComplete: () => {
-                mergedTile.remove();
-              },
+              onComplete: () => mergedTile.remove(),
             });
 
-            // Update score when tiles merge
-            this.updateScore(value);
+            setTimeout(() => {
+              this.updateScore(value);
+            }, 50);
           }
 
           this.grid[toY][toX] = value;
@@ -811,23 +886,23 @@
             `.cell[data-x="${toX}"][data-y="${toY}"]`
           );
 
+          // Movement animation
           gsap.to(tile, {
             x: moveX,
             y: moveY,
             duration: this.animationConfig.moveSpeed,
+            delay: 0.03,
             ease: this.animationConfig.moveEase,
             force3D: true,
             onComplete: () => {
-              gsap.set(tile, {
-                x: 0,
-                y: 0,
-                clearProps: "transform",
-              });
+              gsap.set(tile, { x: 0, y: 0, clearProps: "transform" });
               newCell.appendChild(tile);
 
+              // Scale-based arrival animation
               gsap.from(tile, {
                 scale: this.animationConfig.arrivalScale,
                 duration: this.animationConfig.arrivalSpeed,
+                delay: 0.05,
                 ease: this.animationConfig.arrivalEase,
                 force3D: true,
               });
