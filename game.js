@@ -159,33 +159,62 @@ class Game2048 {
       if (directions[e.keyCode]) this.move(directions[e.keyCode]);
     });
 
-    // Touch controls with debouncing
-    let lastTouchTime = 0;
-    const touchDebounceTime = 200; // Adjust as needed
+    // Touch controls with swipe detection
+    let touchStartX = 0;
+    let touchStartY = 0;
+    const swipeThreshold = 50; // Minimum distance for a swipe
 
     document.addEventListener(
-      "touchend",
+      "touchstart",
       (e) => {
-        const now = Date.now();
-        if (now - lastTouchTime < touchDebounceTime || this.isMoving) {
-          return;
-        }
-        lastTouchTime = now;
-
-        // Existing touch handling code
-        // ...
+        if (e.touches.length > 1 || this.isMoving) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
       },
       { passive: true }
     );
 
-    // Remove touchmove handler since we're not using it
     document.addEventListener(
-      "touchmove",
+      "touchend",
       (e) => {
-        e.preventDefault();
+        if (this.isMoving) return;
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        if (
+          Math.abs(deltaX) < swipeThreshold &&
+          Math.abs(deltaY) < swipeThreshold
+        ) {
+          return; // Not a valid swipe
+        }
+
+        let direction = null;
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+          direction = deltaX > 0 ? "right" : "left";
+        } else {
+          direction = deltaY > 0 ? "down" : "up";
+        }
+
+        if (direction) {
+          this.move(direction);
+        }
       },
-      { passive: false }
+      { passive: true }
     );
+
+    // Remove or comment out the touchmove handler
+    /*
+    document.addEventListener(
+        "touchmove",
+        (e) => {
+            e.preventDefault();
+        },
+        { passive: false }
+    );
+    */
   }
 
   move(direction) {
