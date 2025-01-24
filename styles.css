@@ -34,6 +34,7 @@ body {
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
+  overflow: hidden; /* Ensure tiles don't overflow */
 }
 
 .cell {
@@ -54,22 +55,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: clamp(
-    24px,
-    8vmin,
-    42px
-  ); /* Increased base, relative, and max sizes */
+  font-size: clamp(24px, 8vmin, 42px);
   font-weight: bold;
   color: #776e65;
   z-index: 2;
   position: absolute;
   left: 0;
   top: 0;
-  transform: translateZ(0);
-  backface-visibility: hidden;
   will-change: transform;
+  backface-visibility: hidden;
   user-select: none;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
 }
 
 .tile[data-value="2"] {
