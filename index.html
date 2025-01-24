@@ -392,6 +392,32 @@
     </div>
 
     <script>
+      // Add GSAP lag smoothing to handle CPU freezes
+      gsap.ticker.lagSmoothing(500, 16);
+
+      // Replace any existing animation code with staggered animations
+      gsap.from(".animated-element", {
+        opacity: 0,
+        y: 50,
+        duration: 1,
+        stagger: {
+          amount: 0.5, // Total stagger time
+          from: "start",
+        },
+      });
+
+      // Add ScrollTrigger for scroll-based animations
+      gsap.from(".scroll-animate", {
+        scrollTrigger: {
+          trigger: ".scroll-animate",
+          start: "top center",
+          toggleActions: "play none none reverse",
+        },
+        opacity: 0,
+        y: 100,
+        duration: 1,
+      });
+
       class Game2048 {
         constructor() {
           // Animation speed controls

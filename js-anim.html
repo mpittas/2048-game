@@ -329,11 +329,9 @@
           }
 
           if (moved) {
-            setTimeout(() => {
-              this.cleanupTiles();
-              this.addNewTile();
-              this.isMoving = false;
-            }, 150);
+            this.cleanupTiles();
+            this.addNewTile();
+            this.isMoving = false;
           } else {
             this.isMoving = false;
           }
@@ -425,6 +423,29 @@
       }
 
       new Game2048();
+
+      // Replace setTimeout/setInterval animation with requestAnimationFrame
+      function animate(timestamp) {
+        // Update animation state
+        const element = document.querySelector(".animated");
+
+        // Calculate animation progress
+        if (!animate.startTime) animate.startTime = timestamp;
+        const progress = timestamp - animate.startTime;
+
+        // Update element position/properties based on progress
+        const value = Math.sin(progress / 1000) * 50;
+        element.style.transform = `translateY(${value}px)`;
+
+        // Continue animation loop
+        if (progress < 5000) {
+          // 5 second animation
+          requestAnimationFrame(animate);
+        }
+      }
+
+      // Start animation
+      requestAnimationFrame(animate);
     </script>
   </body>
 </html>
