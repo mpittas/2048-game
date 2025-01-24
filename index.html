@@ -4,7 +4,7 @@
     <title>2048 Game</title>
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
     />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
@@ -22,8 +22,8 @@
       #game-board {
         width: min(92vmin, 500px); /* Reduced from 90% to be more compact */
         height: min(92vmin, 500px);
-        background: #bbada0;
-        border-radius: 3px;
+        background: #9a8574;
+        border-radius: 16px 0 16px 16px;
         padding: 12px; /* Reduced padding */
         position: relative;
         margin: auto;
@@ -48,18 +48,19 @@
 
       .cell {
         background: rgba(238, 228, 218, 0.35);
-        border-radius: 3px;
+        border-radius: 8px;
         position: relative;
         z-index: 1;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
 
       .tile {
         width: 100%;
         height: 100%;
-        border-radius: 3px;
+        border-radius: 8px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -78,6 +79,7 @@
         backface-visibility: hidden;
         will-change: transform;
         user-select: none;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
       }
 
       .tile[data-value="2"] {
@@ -141,11 +143,252 @@
         color: #f9f6f2;
         background: #edc22e;
       }
+
+      .score-container {
+        position: absolute;
+        top: -60px;
+        right: 0;
+        background: #9a8574;
+        padding: 15px 25px;
+        border-radius: 8px;
+        color: white;
+        font-size: clamp(16px, 4vmin, 24px);
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .score-label {
+        color: #eee4da;
+        text-transform: uppercase;
+        font-size: clamp(12px, 3vmin, 16px);
+        margin-bottom: 5px;
+      }
+
+      .score-addition {
+        position: absolute;
+        right: 30px;
+        top: 0;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: clamp(14px, 3.5vmin, 20px);
+        animation: score-pop 0.6s ease-in-out;
+        opacity: 0;
+      }
+
+      @keyframes score-pop {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+      }
+
+      .reset-button {
+        position: absolute;
+        top: -60px;
+        left: 0;
+        background: #8f7a66;
+        color: #f9f6f2;
+        border: none;
+        padding: 15px 25px;
+        border-radius: 3px;
+        font-size: clamp(12px, 3vmin, 16px);
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+      }
+
+      .reset-button:hover {
+        background: #9f8a76;
+      }
+
+      /* Add these styles for the confirmation modal */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.2s ease;
+      }
+
+      .modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal-content {
+        background: #faf8ef;
+        padding: 25px;
+        border-radius: 5px;
+        text-align: center;
+        transform: scale(0.8);
+        transition: all 0.2s ease;
+      }
+
+      .modal-overlay.active .modal-content {
+        transform: scale(1);
+      }
+
+      .modal-title {
+        color: #776e65;
+        font-size: 24px;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+
+      .modal-score {
+        color: #776e65;
+        font-size: 20px;
+        margin: 15px 0;
+        font-weight: bold;
+      }
+
+      .modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .modal-button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 3px;
+        font-weight: bold;
+        cursor: pointer;
+        font-size: clamp(12px, 3vmin, 16px);
+        text-transform: uppercase;
+        transition: background-color 0.15s ease;
+      }
+
+      .modal-button.confirm {
+        background: #8f7a66;
+        color: #f9f6f2;
+      }
+
+      .modal-button.confirm:hover {
+        background: #9f8a76;
+      }
+
+      .modal-button.cancel {
+        background: #f2e8dc;
+        color: #776e65;
+      }
+
+      .modal-button.cancel:hover {
+        background: #e8d8c8;
+      }
+
+      .score-list {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: #776e65;
+        font-size: 14px;
+        font-family: Arial, sans-serif;
+        z-index: 999;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 15px;
+        border-radius: 6px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        max-width: 300px;
+        line-height: 1.4;
+      }
+
+      .score-list strong {
+        font-size: 16px;
+        color: #8f7a66;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 2px;
+      }
+
+      .best-score {
+        color: #776e65;
+        font-size: 13px;
+        margin-bottom: 8px;
+        opacity: 0.8;
+      }
+
+      .score-entry {
+        border: 1px solid rgba(119, 110, 101, 0.2);
+        border-radius: 4px;
+        padding: 8px;
+        margin-bottom: 6px;
+        background: rgba(255, 255, 255, 0.5);
+      }
+
+      .score-entry:last-child {
+        margin-bottom: 0;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          flex-direction: column;
+          justify-content: flex-start;
+          padding-top: max(20px, env(safe-area-inset-top, 60px));
+          padding-left: 15px;
+          padding-right: 15px;
+        }
+
+        .score-list {
+          position: relative;
+          top: 0;
+          left: 0;
+          margin-bottom: 20px;
+          width: 100%;
+          max-width: none;
+          align-self: center;
+          box-sizing: border-box;
+        }
+
+        #game-board {
+          margin-top: 60px;
+          width: 100%;
+          height: auto;
+          aspect-ratio: 1;
+          padding: 12px;
+          box-sizing: border-box;
+        }
+
+        .grid {
+          width: 100%;
+          height: 100%;
+          gap: 8px;
+        }
+      }
     </style>
   </head>
   <body>
+    <div class="score-list"></div>
     <div id="game-board">
+      <div class="score-container">
+        <div class="score-label">score</div>
+        <div class="score-number">0</div>
+      </div>
+      <button class="reset-button">New Game</button>
       <div class="grid"></div>
+    </div>
+
+    <div class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-title">Start new game?</div>
+        <div class="modal-buttons">
+          <button class="modal-button cancel">Cancel</button>
+          <button class="modal-button confirm">Confirm</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -192,10 +435,38 @@
             .map(() => Array(4).fill(0));
           this.tiles = new Map();
           this.isMoving = false;
-          this.initBoard();
-          this.addNewTile();
-          this.addNewTile();
+          this.score = 0;
+          this.scoreElement = document.querySelector(".score-number");
+          this.isGameFinished = false; // Add this new flag
+
+          // Load saved state or start new game
+          this.loadGame();
+
+          // Update the score list
+          this.updateScoreList();
+
           this.setupControls();
+
+          // Add reset button handler with confirmation
+          document
+            .querySelector(".reset-button")
+            .addEventListener("click", () => {
+              this.showConfirmation();
+            });
+
+          // Add modal button handlers
+          document
+            .querySelector(".modal-button.confirm")
+            .addEventListener("click", () => {
+              this.hideConfirmation();
+              this.resetSpeed();
+            });
+
+          document
+            .querySelector(".modal-button.cancel")
+            .addEventListener("click", () => {
+              this.hideConfirmation();
+            });
         }
 
         initBoard() {
@@ -347,6 +618,9 @@
         }
 
         move(direction) {
+          // Don't allow moves if game is finished
+          if (this.isGameFinished) return;
+
           this.isMoving = true;
           let moved = false;
           const newGrid = Array(4)
@@ -400,9 +674,16 @@
               this.cleanupTiles();
               this.addNewTile();
               this.isMoving = false;
+              this.saveGame();
+
+              // Check if the game is over
+              this.checkGameOver();
             }, this.animationConfig.newTileDelay);
           } else {
             this.isMoving = false;
+
+            // Check if the game is over
+            this.checkGameOver();
           }
         }
 
@@ -417,6 +698,7 @@
             }
           }
           return positions;
+          //   s
         }
 
         withinBounds(x, y) {
@@ -450,6 +732,9 @@
                 mergedTile.remove();
               },
             });
+
+            // Update score when tiles merge
+            this.updateScore(value);
           }
 
           this.grid[toY][toX] = value;
@@ -516,6 +801,246 @@
             arrivalEase: "power2.out",
             newTileDelay: 100,
           };
+          this.resetGame(); // Call new reset method instead
+        }
+
+        // New method to handle game reset
+        resetGame() {
+          // Save current score if it's not zero and game isn't already finished
+          if (this.score > 0 && !this.isGameFinished) {
+            this.saveScore();
+          }
+
+          // Reset the game finished flag
+          this.isGameFinished = false;
+
+          // Clear saved state
+          localStorage.removeItem("game2048");
+
+          // Clear existing tiles
+          this.tiles.forEach((tile) => tile.remove());
+          this.tiles.clear();
+
+          // Reset score
+          this.score = 0;
+          this.scoreElement.textContent = "0";
+
+          // Reset grid
+          this.grid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+
+          // Add initial tiles
+          this.addNewTile();
+          this.addNewTile();
+
+          // Update the score list
+          this.updateScoreList();
+        }
+
+        initNewGame() {
+          // Clear any existing tiles and grid
+          this.tiles.forEach((tile) => tile.remove());
+          this.tiles.clear();
+          document.querySelector(".grid").innerHTML = "";
+
+          // Initialize the board once
+          this.initBoard();
+
+          // Reset game state
+          this.grid = Array(4)
+            .fill()
+            .map(() => Array(4).fill(0));
+          this.score = 0;
+          this.scoreElement.textContent = "0";
+
+          // Add initial tiles
+          this.addNewTile();
+          this.addNewTile();
+        }
+
+        // Add this new method
+        updateScore(addition) {
+          this.score += addition;
+          this.scoreElement.textContent = this.score;
+
+          // Show score addition animation
+          if (addition > 0) {
+            const scoreAddition = document.createElement("div");
+            scoreAddition.className = "score-addition";
+            scoreAddition.textContent = "+" + addition;
+            document
+              .querySelector(".score-container")
+              .appendChild(scoreAddition);
+
+            // Remove the element after animation
+            setTimeout(() => {
+              scoreAddition.remove();
+            }, 600);
+          }
+        }
+
+        // Add these new methods for save/load functionality
+        saveGame() {
+          const gameState = {
+            grid: this.grid,
+            score: this.score,
+            timestamp: Date.now(),
+          };
+          localStorage.setItem("game2048", JSON.stringify(gameState));
+        }
+
+        loadGame() {
+          const savedState = localStorage.getItem("game2048");
+
+          if (savedState) {
+            try {
+              const gameState = JSON.parse(savedState);
+
+              // Only restore if saved within last 24 hours
+              if (Date.now() - gameState.timestamp < 24 * 60 * 60 * 1000) {
+                // Clear existing tiles and grid first
+                this.tiles.forEach((tile) => tile.remove());
+                this.tiles.clear();
+                document.querySelector(".grid").innerHTML = "";
+
+                // Initialize the board
+                this.initBoard();
+
+                // Restore the state
+                this.grid = gameState.grid;
+                this.score = gameState.score;
+                this.scoreElement.textContent = this.score;
+
+                // Recreate tiles from saved grid
+                for (let y = 0; y < 4; y++) {
+                  for (let x = 0; x < 4; x++) {
+                    if (this.grid[y][x] !== 0) {
+                      this.createTile(x, y, this.grid[y][x]);
+                    }
+                  }
+                }
+                return;
+              }
+            } catch (e) {
+              console.error("Error loading saved game:", e);
+            }
+          }
+
+          // Start new game if no valid saved state
+          this.initNewGame();
+        }
+
+        // Add these methods to handle the confirmation modal
+        showConfirmation() {
+          document.querySelector(".modal-overlay").classList.add("active");
+        }
+
+        hideConfirmation() {
+          document.querySelector(".modal-overlay").classList.remove("active");
+        }
+
+        saveScore() {
+          const scores = this.getStoredScores();
+          // Add new score at the beginning of the array instead of the end
+          scores.unshift({
+            score: this.score,
+            timestamp: new Date().toLocaleString(),
+          });
+          // Keep only the last 10 scores
+          const recentScores = scores.slice(0, 10);
+          localStorage.setItem("game2048Scores", JSON.stringify(recentScores));
+          this.updateScoreList();
+        }
+
+        getStoredScores() {
+          const scores = localStorage.getItem("game2048Scores");
+          return scores ? JSON.parse(scores) : [];
+        }
+
+        updateScoreList() {
+          const scoreListElement = document.querySelector(".score-list");
+          const scores = this.getStoredScores();
+
+          // Calculate best score
+          const bestScore = scores.reduce((max, item) => {
+            const score = typeof item === "object" ? item.score : item;
+            return Math.max(max, score);
+          }, 0);
+
+          scoreListElement.innerHTML =
+            "<strong>Recent Scores</strong>" +
+            `<div class="best-score">Best: ${bestScore}</div>` +
+            scores
+              .map((item) => {
+                if (typeof item === "object" && item.score !== undefined) {
+                  return `<div class="score-entry">
+                              <span style="font-size: 14px; font-weight: bold; color: #776e65;">
+                                  ${item.score} <span style="font-weight: normal; font-size: 12px;">points</span>
+                              </span>
+                              <br><span style="color: #a9a9a9; font-size: 11px;">${item.timestamp}</span>
+                          </div>`;
+                }
+                return `<div class="score-entry">${item} (old format)</div>`;
+              })
+              .join("");
+        }
+
+        checkGameOver() {
+          if (this.isGameOver()) {
+            // Only save score if game just ended
+            if (!this.isGameFinished && this.score > 0) {
+              this.saveScore();
+              this.isGameFinished = true;
+            }
+          }
+        }
+
+        isGameOver() {
+          // Check for any empty cells
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              if (this.grid[y][x] === 0) return false;
+            }
+          }
+
+          // Check for possible merges
+          for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+              const value = this.grid[y][x];
+              // Check right
+              if (x < 3 && this.grid[y][x + 1] === value) return false;
+              // Check down
+              if (y < 3 && this.grid[y + 1][x] === value) return false;
+            }
+          }
+
+          // If we get here, game is over - show the modal
+          this.showGameOverModal();
+          return true;
+        }
+
+        showGameOverModal() {
+          const modalOverlay = document.querySelector(".modal-overlay");
+          const modalContent = modalOverlay.querySelector(".modal-content");
+          modalContent.innerHTML = `
+            <div class="modal-title">Game Over!</div>
+            <div class="modal-score">Final Score: ${this.score}</div>
+            <div class="modal-buttons">
+                <button class="modal-button confirm">New Game</button>
+            </div>
+          `;
+
+          modalOverlay.classList.add("active");
+
+          // Add click handler for the new game button
+          const newGameButton = modalContent.querySelector(
+            ".modal-button.confirm"
+          );
+          newGameButton.addEventListener("click", () => {
+            modalOverlay.classList.remove("active");
+            this.resetSpeed();
+          });
         }
       }
 
