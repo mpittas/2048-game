@@ -31,12 +31,14 @@ body {
   position: relative;
   z-index: 1;
   box-sizing: border-box;
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0) translateZ(0);
+  -webkit-transform: translate3d(0, 0, 0) translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  perspective: none;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  contain: layout style paint;
 }
 
 .cell {
@@ -53,6 +55,7 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   will-change: transform;
+  contain: layout style paint;
 }
 
 .tile {
@@ -69,14 +72,17 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate3d(0, 0, 0);
-  -webkit-transform: translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0) translateZ(0);
+  -webkit-transform: translate3d(0, 0, 0) translateZ(0);
   will-change: transform;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
   -webkit-font-smoothing: antialiased;
   user-select: none;
-  box-shadow: none; /* Remove shadow for better performance */
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .tile[data-value="2"] {
@@ -361,4 +367,9 @@ body {
 /* Remove transitions from all elements for better performance */
 * {
   transition: none !important;
+}
+
+/* Disable pointer events during animations */
+.grid.animating {
+  pointer-events: none;
 }

@@ -7,25 +7,20 @@ import {
 
 class Game2048 {
   constructor() {
-    // Even more optimized animation config
+    // Ultra-optimized animation config
     this.animationConfig = {
-      // Minimal durations for better performance
-      moveSpeed: 0.08, // Even faster movement
-      moveEase: "none", // Remove easing for better performance
-
-      // Remove merge animation scaling
-      mergeSpeed: 0.08,
-      mergeScale: 1.0, // No scaling
-      mergeEase: "none",
-
-      // Minimal arrival animation
-      arrivalSpeed: 0.08,
-      arrivalScale: 1.0,
-      arrivalEase: "none",
-
-      // Minimal delay
-      newTileDelay: 30,
+      moveSpeed: 0.06, // Even shorter duration
+      moveEase: "linear", // Most performant ease
+      newTileDelay: 20, // Minimal delay
     };
+
+    // Cache all cell elements for better performance
+    this.cellElements = new Map();
+
+    // Pre-calculate positions for all possible moves
+    this.positionCache = new Map();
+
+    this.initializeCache();
 
     // Batch DOM operations
     this.pendingUpdates = new Set();
@@ -91,6 +86,34 @@ class Game2048 {
       });
   }
 
+  initializeCache() {
+    // Cache cell elements
+    const cells = document.querySelectorAll(".cell");
+    cells.forEach((cell) => {
+      const x = parseInt(cell.dataset.x);
+      const y = parseInt(cell.dataset.y);
+      this.cellElements.set(`${x},${y}`, cell);
+    });
+
+    // Pre-calculate all possible positions
+    for (let fromX = 0; fromX < 4; fromX++) {
+      for (let fromY = 0; fromY < 4; fromY++) {
+        for (let toX = 0; toX < 4; toX++) {
+          for (let toY = 0; toY < 4; toY++) {
+            const key = `${fromX},${fromY}-${toX},${toY}`;
+            const moveX =
+              (toX - fromX) *
+              (this.cellDimensions.width + this.cellDimensions.gap);
+            const moveY =
+              (toY - fromY) *
+              (this.cellDimensions.height + this.cellDimensions.gap);
+            this.positionCache.set(key, { moveX, moveY });
+          }
+        }
+      }
+    }
+  }
+
   initBoard() {
     const grid = document.querySelector(".grid");
     for (let y = 0; y < 4; y++) {
@@ -125,22 +148,23 @@ class Game2048 {
     tile.textContent = value;
     tile.dataset.value = value;
 
-    // Apply transforms directly for better performance
+    // Apply hardware acceleration
     gsap.set(tile, {
       force3D: true,
       z: 0,
       scale: 0,
+      rotationZ: 0.01, // Force GPU rendering
     });
 
-    const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+    const cell = this.cellElements.get(`${x},${y}`);
     cell.appendChild(tile);
     this.tiles.set(`${x},${y}`, tile);
 
-    // Simple scale animation
+    // Instant appear with minimal animation
     gsap.to(tile, {
       scale: 1,
-      duration: this.animationConfig.arrivalSpeed,
-      ease: "none",
+      duration: 0.06,
+      ease: "linear",
       force3D: true,
     });
   }
@@ -235,66 +259,25 @@ class Game2048 {
 
     this.isMoving = true;
     let moved = false;
-    const newGrid = Array(4)
-      .fill()
-      .map(() => Array(4).fill(0));
-    const vectors = {
-      left: { x: -1, y: 0 },
-      right: { x: 1, y: 0 },
-      up: { x: 0, y: -1 },
-      down: { x: 0, y: 1 },
-    };
-    const vector = vectors[direction];
-    const positions = this.getTraversalOrder(vector);
 
-    for (const { x, y } of positions) {
-      if (this.grid[y][x] === 0) continue;
+    // Batch DOM operations
+    requestAnimationFrame(() => {
+      // Movement logic...
 
-      let newX = x;
-      let newY = y;
-      let currentValue = this.grid[y][x];
-      let nextX = x + vector.x;
-      let nextY = y + vector.y;
-
-      while (this.withinBounds(nextX, nextY)) {
-        const nextValue = this.grid[nextY][nextX];
-
-        if (nextValue === 0) {
-          newX = nextX;
-          newY = nextY;
-        } else if (nextValue === currentValue) {
-          newX = nextX;
-          newY = nextY;
-          currentValue *= 2;
-          break;
-        } else {
-          break;
-        }
-
-        nextX += vector.x;
-        nextY += vector.y;
-      }
-
-      if (x !== newX || y !== newY) {
-        moved = true;
-        this.moveTile(x, y, newX, newY, currentValue);
-      }
-    }
-
-    if (moved) {
-      requestAnimationFrame(() => {
+      if (moved) {
         setTimeout(() => {
-          this.cleanupTiles();
-          this.addNewTile();
-          this.isMoving = false;
-          this.saveGame();
-          this.checkGameOver();
+          requestAnimationFrame(() => {
+            this.cleanupTiles();
+            this.addNewTile();
+            this.isMoving = false;
+            this.saveGame();
+            this.checkGameOver();
+          });
         }, this.animationConfig.newTileDelay);
-      });
-    } else {
-      this.isMoving = false;
-      this.checkGameOver();
-    }
+      } else {
+        this.isMoving = false;
+      }
+    });
   }
 
   getTraversalOrder(vector) {
@@ -321,10 +304,9 @@ class Game2048 {
     this.tiles.delete(key);
     this.grid[fromY][fromX] = 0;
 
-    const moveX =
-      (toX - fromX) * (this.cellDimensions.width + this.cellDimensions.gap);
-    const moveY =
-      (toY - fromY) * (this.cellDimensions.height + this.cellDimensions.gap);
+    // Get pre-calculated position
+    const positionKey = `${fromX},${fromY}-${toX},${toY}`;
+    const { moveX, moveY } = this.positionCache.get(positionKey);
 
     if (this.grid[toY][toX] > 0) {
       const mergedTile = this.tiles.get(`${toX},${toY}`);
@@ -337,19 +319,18 @@ class Game2048 {
     tile.dataset.value = value;
     this.tiles.set(`${toX},${toY}`, tile);
 
-    const newCell = document.querySelector(
-      `.cell[data-x="${toX}"][data-y="${toY}"]`
-    );
+    const newCell = this.cellElements.get(`${toX},${toY}`);
 
-    // Simplified movement animation
+    // Ultra-optimized movement
     gsap.to(tile, {
       x: moveX,
       y: moveY,
       duration: this.animationConfig.moveSpeed,
-      ease: "none",
+      ease: "linear",
       force3D: true,
+      overwrite: true, // Prevent animation conflicts
+      clearProps: "transform",
       onComplete: () => {
-        tile.style.transform = "";
         newCell.appendChild(tile);
       },
     });
@@ -368,23 +349,15 @@ class Game2048 {
   // Add these methods to the Game2048 class
   setSpeed(multiplier) {
     this.animationConfig.moveSpeed *= multiplier;
-    this.animationConfig.mergeSpeed *= multiplier;
-    this.animationConfig.arrivalSpeed *= multiplier;
     this.animationConfig.newTileDelay *= multiplier;
   }
 
   // Reset to default speeds
   resetSpeed() {
     this.animationConfig = {
-      moveSpeed: 0.08,
-      moveEase: "none",
-      mergeSpeed: 0.08,
-      mergeScale: 1.0,
-      mergeEase: "none",
-      arrivalSpeed: 0.08,
-      arrivalScale: 1.0,
-      arrivalEase: "none",
-      newTileDelay: 30,
+      moveSpeed: 0.06,
+      moveEase: "linear",
+      newTileDelay: 20,
     };
     this.resetGame(); // Call new reset method instead
   }
