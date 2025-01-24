@@ -38,6 +38,7 @@ class Game2048 {
     // Cache DOM queries for better performance
     this.gridElement = document.querySelector(".grid");
     this.gridElement.style.willChange = "transform";
+    this.scoreElement = document.querySelector(".score-number");
 
     // Pre-calculate cell dimensions
     const cell = document.createElement("div");
@@ -57,7 +58,6 @@ class Game2048 {
     this.tiles = new Map();
     this.isMoving = false;
     this.score = 0;
-    this.scoreElement = document.querySelector(".score-number");
     this.isGameFinished = false; // Add this new flag
 
     // Load saved state or start new game
@@ -89,16 +89,20 @@ class Game2048 {
   }
 
   initBoard() {
-    const grid = document.querySelector(".grid");
-    for (let y = 0; y < 4; y++) {
-      for (let x = 0; x < 4; x++) {
+    const grid = this.gridElement; // Use cached gridElement
+    const fragment = document.createDocumentFragment(); // Use DocumentFragment for batch DOM operations
+
+    for (let y = 0; y < this.cellCount; y++) {
+      for (let x = 0; x < this.cellCount; x++) {
         const cell = document.createElement("div");
         cell.className = "cell";
         cell.dataset.x = x;
         cell.dataset.y = y;
-        grid.appendChild(cell);
+        fragment.appendChild(cell);
       }
     }
+
+    grid.appendChild(fragment); // Append all cells at once
   }
 
   addNewTile() {
@@ -122,21 +126,36 @@ class Game2048 {
     tile.textContent = value;
     tile.dataset.value = value;
 
-    // Set initial transform to avoid style recalculations
+    // Set initial styles before appending to DOM
     tile.style.transform = "scale(0)";
     tile.style.backfaceVisibility = "hidden";
+    tile.style.willChange = "transform";
 
-    const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+    const cell = this.gridElement.querySelector(
+      `.cell[data-x="${x}"][data-y="${y}"]`
+    );
     cell.appendChild(tile);
     this.tiles.set(`${x},${y}`, tile);
 
-    // Use GSAP animation with transforms only
-    gsap.to(tile, {
-      scale: 1,
-      duration: 0.2, // Adjust duration as needed
-      ease: "power2.out",
-      force3D: true,
-    });
+    // Use GSAP timeline for smoother animations
+    gsap.fromTo(
+      tile,
+      { scale: 0 },
+      {
+        scale: this.animationConfig.arrivalScale,
+        duration: this.animationConfig.arrivalSpeed,
+        ease: this.animationConfig.arrivalEase,
+        force3D: true,
+        onComplete: () => {
+          gsap.to(tile, {
+            scale: 1,
+            duration: 0.1,
+            ease: "power2.out",
+            force3D: true,
+          });
+        },
+      }
+    );
   }
 
   updateTilePosition(tile, x, y) {
@@ -223,9 +242,6 @@ class Game2048 {
     this.isMoving = true;
     let moved = false;
     const movements = [];
-    const newGrid = Array(4)
-      .fill()
-      .map(() => Array(4).fill(0));
     const vectors = {
       left: { x: -1, y: 0 },
       right: { x: 1, y: 0 },
@@ -275,13 +291,12 @@ class Game2048 {
       }
     }
 
-    // Instead of applying movements immediately, batch them
-    requestAnimationFrame(() => {
-      movements.forEach(({ fromX, fromY, toX, toY, value }) => {
-        this.moveTile(fromX, fromY, toX, toY, value);
-      });
+    if (moved) {
+      requestAnimationFrame(() => {
+        movements.forEach(({ fromX, fromY, toX, toY, value }) => {
+          this.moveTile(fromX, fromY, toX, toY, value);
+        });
 
-      if (moved) {
         setTimeout(() => {
           this.cleanupTiles();
           this.addNewTile();
@@ -289,11 +304,11 @@ class Game2048 {
           this.saveGame();
           this.checkGameOver();
         }, this.animationConfig.newTileDelay);
-      } else {
-        this.isMoving = false;
-        this.checkGameOver();
-      }
-    });
+      });
+    } else {
+      this.isMoving = false;
+      this.checkGameOver();
+    }
   }
 
   getTraversalOrder(vector) {
@@ -329,15 +344,18 @@ class Game2048 {
     if (this.grid[toY][toX] > 0) {
       const mergedTile = this.tiles.get(`${toX},${toY}`);
 
-      // Merge animation
-      gsap.to(mergedTile, {
+      // Merge animation using timeline
+      const mergeTimeline = gsap.timeline({
+        onComplete: () => {
+          mergedTile.remove();
+        },
+      });
+
+      mergeTimeline.to(mergedTile, {
         scale: 1.2,
         duration: 0.15,
         ease: "power1.out",
         force3D: true,
-        onComplete: () => {
-          mergedTile.remove();
-        },
       });
 
       this.updateScore(value);
@@ -351,21 +369,24 @@ class Game2048 {
     // Ensure the tile is positioned absolutely for smooth transforms
     tile.style.position = "absolute";
 
-    // Use transforms for movement
-    gsap.to(tile, {
-      x: deltaX,
-      y: deltaY,
-      duration: 0.2,
-      ease: "power2.out",
-      force3D: true,
+    // Use transforms for movement with timeline
+    const moveTimeline = gsap.timeline({
       onComplete: () => {
         // Reset transforms after animation
         tile.style.transform = "";
-        const newCell = document.querySelector(
+        const newCell = this.gridElement.querySelector(
           `.cell[data-x="${toX}"][data-y="${toY}"]`
         );
         newCell.appendChild(tile);
       },
+    });
+
+    moveTimeline.to(tile, {
+      x: deltaX,
+      y: deltaY,
+      duration: this.animationConfig.moveSpeed,
+      ease: this.animationConfig.moveEase,
+      force3D: true,
     });
   }
 
