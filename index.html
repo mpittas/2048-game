@@ -333,6 +333,30 @@
         margin-bottom: 0;
       }
 
+      /* Add these new styles before the existing @media query */
+      .score-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        user-select: none;
+      }
+
+      .score-list-header .arrow {
+        transition: transform 0.3s ease;
+        font-size: 18px;
+        color: #776e65;
+      }
+
+      .score-list.collapsed .arrow {
+        transform: rotate(-180deg);
+      }
+
+      .score-list.collapsed .score-list-content {
+        display: none;
+      }
+
+      /* Update the mobile styles in the existing @media query */
       @media (max-width: 768px) {
         body {
           flex-direction: column;
@@ -346,11 +370,16 @@
           position: relative;
           top: 0;
           left: 0;
-          margin-bottom: 20px;
+          margin-bottom: 10px; /* Reduced from 20px */
           width: 100%;
           max-width: none;
           align-self: center;
           box-sizing: border-box;
+          transition: margin-bottom 0.3s ease;
+        }
+
+        .score-list.collapsed {
+          margin-bottom: 5px;
         }
 
         #game-board {
@@ -493,6 +522,16 @@
             .addEventListener("click", () => {
               this.hideConfirmation();
             });
+
+          // Add window resize handler to manage collapse state
+          window.addEventListener("resize", () => {
+            const scoreList = document.querySelector(".score-list");
+            if (window.innerWidth <= 768) {
+              scoreList.classList.add("collapsed");
+            } else {
+              scoreList.classList.remove("collapsed");
+            }
+          });
         }
 
         initBoard() {
@@ -994,22 +1033,44 @@
             return Math.max(max, score);
           }, 0);
 
-          scoreListElement.innerHTML =
-            "<strong>Recent Scores</strong>" +
-            `<div class="best-score">Best: ${bestScore}</div>` +
-            scores
-              .map((item) => {
-                if (typeof item === "object" && item.score !== undefined) {
-                  return `<div class="score-entry">
+          // Create header with arrow
+          const headerHtml = `
+            <div class="score-list-header">
+              <strong>Recent Scores</strong>
+              <span class="arrow">▼</span>
+            </div>`;
+
+          // Create content
+          const contentHtml = `
+            <div class="score-list-content">
+              <div class="best-score">Best: ${bestScore}</div>
+              ${scores
+                .map((item) => {
+                  if (typeof item === "object" && item.score !== undefined) {
+                    return `<div class="score-entry">
                               <span style="font-size: 14px; font-weight: bold; color: #776e65;">
                                   ${item.score} <span style="font-weight: normal; font-size: 12px;">points</span>
                               </span>
                               <br><span style="color: #a9a9a9; font-size: 11px;">${item.timestamp}</span>
                           </div>`;
-                }
-                return `<div class="score-entry">${item} (old format)</div>`;
-              })
-              .join("");
+                  }
+                  return `<div class="score-entry">${item} (old format)</div>`;
+                })
+                .join("")}
+            </div>`;
+
+          scoreListElement.innerHTML = headerHtml + contentHtml;
+
+          // Add click handler for header
+          const header = scoreListElement.querySelector(".score-list-header");
+          header.addEventListener("click", () => {
+            scoreListElement.classList.toggle("collapsed");
+          });
+
+          // On mobile, start collapsed
+          if (window.innerWidth <= 768) {
+            scoreListElement.classList.add("collapsed");
+          }
         }
 
         checkGameOver() {
