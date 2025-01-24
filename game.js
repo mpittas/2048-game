@@ -14,17 +14,6 @@ class Game2048 {
       newTileDelay: 20, // Minimal delay
     };
 
-    // Cache all cell elements for better performance
-    this.cellElements = new Map();
-
-    // Pre-calculate positions for all possible moves
-    this.positionCache = new Map();
-
-    this.initializeCache();
-
-    // Batch DOM operations
-    this.pendingUpdates = new Set();
-
     // Force GPU acceleration for the game board
     this.gridElement = document.querySelector(".grid");
     gsap.set(this.gridElement, {
@@ -33,11 +22,7 @@ class Game2048 {
       backfaceVisibility: "hidden",
     });
 
-    // Cache DOM queries for better performance
-    this.gridElement = document.querySelector(".grid");
-    this.gridElement.style.willChange = "transform";
-
-    // Pre-calculate cell dimensions
+    // Pre-calculate cell dimensions FIRST
     const cell = document.createElement("div");
     cell.className = "cell";
     this.gridElement.appendChild(cell);
@@ -48,6 +33,15 @@ class Game2048 {
     };
     this.gridElement.removeChild(cell);
 
+    // Initialize the board
+    this.initBoard();
+
+    // THEN cache elements and pre-calculate positions
+    this.cellElements = new Map();
+    this.positionCache = new Map();
+    this.initializeCache();
+
+    // Initialize other properties
     this.cellCount = 4;
     this.grid = Array(4)
       .fill()
