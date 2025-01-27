@@ -47,20 +47,37 @@ class GameUI {
     let touchStartY = 0;
     let touchStartTime = 0;
     const minSwipeDistance = 20;
+    const gameBoard = document.getElementById("game-board");
+    let isSwiping = false;
 
-    document.addEventListener(
+    gameBoard.addEventListener(
       "touchstart",
       (e) => {
+        if (e.target !== gameBoard) return; // Only handle touches directly on game board
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
+        isSwiping = true;
+        e.preventDefault();
       },
-      { passive: true }
+      { passive: false }
     );
 
-    document.addEventListener(
+    gameBoard.addEventListener(
+      "touchmove",
+      (e) => {
+        if (!isSwiping) return;
+        e.preventDefault();
+      },
+      { passive: false }
+    );
+
+    gameBoard.addEventListener(
       "touchend",
       (e) => {
+        if (!isSwiping) return;
+        isSwiping = false;
+
         if (this.game.isMoving) return;
 
         const touchEndX = e.changedTouches[0].clientX;
@@ -87,14 +104,6 @@ class GameUI {
         }
       },
       { passive: true }
-    );
-
-    document.addEventListener(
-      "touchmove",
-      (e) => {
-        e.preventDefault();
-      },
-      { passive: false }
     );
   }
 
@@ -158,10 +167,14 @@ class GameUI {
     if (!scoreListElement.dataset.handlerAdded) {
       const header = scoreListElement.querySelector(".score-list-header");
       header.addEventListener("click", () => {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
+          // For mobile and tablet
           scoreListElement.classList.toggle("expanded");
+          scoreListElement.classList.remove("collapsed");
         } else {
+          // For desktop
           scoreListElement.classList.toggle("collapsed");
+          scoreListElement.classList.remove("expanded");
         }
       });
       scoreListElement.dataset.handlerAdded = "true";

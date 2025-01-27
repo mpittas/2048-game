@@ -2,11 +2,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  height: auto;
+  min-height: 100vh;
   margin: 0;
   background: #faf8ef;
   font-family: Arial, sans-serif;
   -webkit-text-size-adjust: none; /* Prevent iOS font scaling */
+  overflow-y: auto; /* Allow scrolling */
+  overscroll-behavior-y: contain;
+  position: relative;
+  padding: 20px;
+  box-sizing: border-box;
 }
 
 #game-board {
@@ -18,7 +24,9 @@ body {
   position: relative;
   margin: auto;
   box-sizing: border-box;
-  touch-action: none; /* Prevent unwanted scrolling/zooming */
+  touch-action: none; /* Prevent touch events only within game board */
+  isolation: isolate; /* Create a new stacking context */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
 }
 
 .grid {
@@ -31,6 +39,7 @@ body {
   position: relative;
   z-index: 1;
   box-sizing: border-box;
+  pointer-events: none; /* Prevent grid from interfering with touch events */
 }
 
 .cell {
@@ -61,6 +70,7 @@ body {
   will-change: transform;
   user-select: none;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none; /* Prevent tiles from interfering with touch events */
 }
 
 .tile[data-value="2"] {
@@ -267,6 +277,9 @@ body {
   position: absolute;
   top: 10px;
   left: 10px;
+  width: calc(100% - 20px);
+  max-width: 300px;
+  box-sizing: border-box;
   color: #776e65;
   font-size: 14px;
   font-family: Arial, sans-serif;
@@ -275,7 +288,6 @@ body {
   padding: 15px;
   border-radius: 6px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  max-width: 300px;
   line-height: 1.4;
   transition: all 0.3s ease;
 }
@@ -347,8 +359,11 @@ body {
     flex-direction: column;
     justify-content: flex-start;
     padding-top: max(20px, env(safe-area-inset-top, 60px));
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
     padding-left: 15px;
     padding-right: 15px;
+    min-height: 100vh;
+    height: auto;
   }
 
   .score-list {
@@ -357,8 +372,13 @@ body {
     left: 0;
     width: 100%;
     max-width: none;
-    align-self: center;
-    box-sizing: border-box;
+    margin: 0 0 1.25rem 0;
+  }
+
+  #game-board {
+    margin: 70px auto 0 auto;
+    width: 100%;
+    max-width: min(92vmin, 500px);
   }
 
   .score-list-content {
@@ -366,8 +386,8 @@ body {
     overflow: hidden;
   }
 
-  .score-list.expanded {
-    margin-bottom: 20px;
+  .score-list.collapsed .score-list-content {
+    max-height: initial;
   }
 
   .score-list.expanded .score-list-content {
@@ -375,18 +395,24 @@ body {
     overflow-y: auto;
   }
 
-  #game-board {
-    margin-top: 60px;
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-    padding: 12px;
-    box-sizing: border-box;
+  .toggle-scores {
+    transform: rotate(90deg);
+  }
+
+  .score-list.expanded .toggle-scores {
+    transform: rotate(-90deg);
   }
 
   .grid {
     width: 100%;
     height: 100%;
     gap: 8px;
+  }
+
+  .game-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding-top: 1rem; /* Reduce padding since we're using relative positioning */
   }
 }
