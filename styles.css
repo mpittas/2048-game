@@ -283,7 +283,7 @@ body {
   color: #776e65;
   font-size: 14px;
   font-family: Arial, sans-serif;
-  z-index: 999;
+  z-index: 99;
   background: rgba(255, 255, 255, 0.95);
   padding: 15px;
   border-radius: 6px;
@@ -383,7 +383,6 @@ body {
 
   .score-list-content {
     max-height: 0;
-    overflow: hidden;
   }
 
   .score-list.collapsed .score-list-content {
@@ -392,7 +391,6 @@ body {
 
   .score-list.expanded .score-list-content {
     max-height: 300px;
-    overflow-y: auto;
   }
 
   .toggle-scores {
