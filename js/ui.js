@@ -6,22 +6,39 @@ class GameUI {
   }
 
   setupModal() {
-    document.querySelector(".reset-button").addEventListener("click", () => {
-      this.showConfirmation();
+    const resetButton = document.querySelector(".reset-button");
+    const confirmButton = document.querySelector(".modal-button.confirm");
+    const cancelButton = document.querySelector(".modal-button.cancel");
+    const modalOverlay = document.querySelector(".modal-overlay");
+
+    resetButton.addEventListener("click", () => this.showConfirmation());
+
+    // Handle button clicks
+    confirmButton.addEventListener("click", () => {
+      this.hideConfirmation();
+      this.game.resetGame();
     });
 
-    document
-      .querySelector(".modal-button.confirm")
-      .addEventListener("click", () => {
+    cancelButton.addEventListener("click", () => this.hideConfirmation());
+
+    // Add keyboard support
+    document.addEventListener("keydown", (e) => {
+      if (!modalOverlay.classList.contains("active")) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.hideConfirmation();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
         this.hideConfirmation();
         this.game.resetGame();
-      });
+      }
+    });
 
-    document
-      .querySelector(".modal-button.cancel")
-      .addEventListener("click", () => {
-        this.hideConfirmation();
-      });
+    // Add focus management
+    modalOverlay.addEventListener("show", () => {
+      confirmButton.focus();
+    });
   }
 
   setupControls() {
@@ -119,16 +136,35 @@ class GameUI {
     const modalOverlay = document.querySelector(".modal-overlay");
     const modalContent = modalOverlay.querySelector(".modal-content");
     modalContent.innerHTML = `
-            <div class="modal-title">Game Over!</div>
-            <div class="modal-score">Final Score: ${this.game.score}</div>
-            <div class="modal-buttons">
-                <button class="modal-button confirm">New Game</button>
-            </div>
-        `;
+    <div class="modal-title">Game Over!</div>
+    <div class="modal-score">Final Score: ${this.game.score}</div>
+    <div class="modal-buttons">
+      <button class="modal-button confirm" autofocus>New Game</button>
+    </div>
+  `;
 
     modalOverlay.classList.add("active");
 
+    // Focus the new game button
     const newGameButton = modalContent.querySelector(".modal-button.confirm");
+    newGameButton.focus();
+
+    // Add keyboard listener for game over modal
+    const handleGameOverKeydown = (e) => {
+      if (!modalOverlay.classList.contains("active")) {
+        document.removeEventListener("keydown", handleGameOverKeydown);
+        return;
+      }
+
+      if (e.key === "Enter" || e.key === "Escape") {
+        e.preventDefault();
+        modalOverlay.classList.remove("active");
+        this.game.resetGame();
+        document.removeEventListener("keydown", handleGameOverKeydown);
+      }
+    };
+
+    document.addEventListener("keydown", handleGameOverKeydown);
     newGameButton.addEventListener("click", () => {
       modalOverlay.classList.remove("active");
       this.game.resetGame();
