@@ -15,9 +15,12 @@ class GameStorage {
         const gameState = JSON.parse(savedState);
         if (Date.now() - gameState.timestamp < 24 * 60 * 60 * 1000) {
           return gameState;
+        } else {
+          this.clearSavedGame();
         }
       } catch (e) {
         console.error("Error loading saved game:", e);
+        this.clearSavedGame();
       }
     }
     return null;
@@ -36,5 +39,9 @@ class GameStorage {
   static getStoredScores() {
     const scores = localStorage.getItem("game2048Scores");
     return scores ? JSON.parse(scores) : [];
+  }
+
+  static clearSavedGame() {
+    localStorage.removeItem("game2048");
   }
 }

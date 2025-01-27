@@ -136,7 +136,26 @@ class Game2048 {
       GameStorage.saveScore(this.score);
     }
 
-    this.initNewGame();
+    // Clear the grid
+    this.grid = Array(4)
+      .fill()
+      .map(() => Array(4).fill(0));
+    this.score = 0;
+    this.isGameFinished = false;
+    this.isMoving = false;
+    this.scoreElement.textContent = "0";
+
+    // Clear all existing tiles
+    this.tiles.forEach((tile) => tile.remove());
+    this.tiles.clear();
+
+    // Add two initial tiles
+    this.addNewTile();
+    this.addNewTile();
+
+    // Save the initial state
+    GameStorage.saveGame(this.grid, this.score);
+
     this.ui.updateScoreList();
   }
 
