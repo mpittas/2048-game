@@ -312,6 +312,7 @@
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         max-width: 300px;
         line-height: 1.4;
+        transition: all 0.3s ease;
       }
 
       .score-list strong {
@@ -319,8 +320,6 @@
         color: #8f7a66;
         display: block;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 2px;
       }
 
       .best-score {
@@ -340,6 +339,41 @@
 
       .score-entry:last-child {
         margin-bottom: 0;
+      }
+
+      .score-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+      }
+
+      .toggle-scores {
+        width: 19px;
+        height: 19px;
+        margin: -2px 0 0 6px;
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' fill='none' viewBox='0 0 24 24'%3E%3Cpath fill='%23fff' d='M0 0h24v24H0z'/%3E%3Cpath fill='%238f7a66' fill-rule='evenodd' d='M2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10S2 17.523 2 12Zm8.293 3.707a1 1 0 0 1 0-1.414L12.586 12l-2.293-2.293a1 1 0 1 1 1.414-1.414l2.716 2.716a1.402 1.402 0 0 1 0 1.982l-2.716 2.716a1 1 0 0 1-1.414 0Z' clip-rule='evenodd'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .score-list.collapsed .toggle-scores {
+        transform: rotate(-90deg);
+      }
+
+      .score-list-content {
+        overflow-y: auto;
+        transition: max-height 0.3s ease;
+        max-height: 400px; /* Adjust based on your needs */
+      }
+
+      .score-list.collapsed .score-list-content {
+        max-height: 0;
       }
 
       @media (max-width: 768px) {
@@ -376,11 +410,32 @@
           height: 100%;
           gap: 8px;
         }
+
+        .score-list.collapsed {
+          margin-bottom: 0;
+        }
+
+        .score-list .score-list-content {
+          max-height: 0;
+        }
+
+        .score-list.expanded .score-list-content {
+          max-height: 300px;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="score-list"></div>
+    <div class="score-list">
+      <div class="score-list-header">
+        <strong>Recent Scores</strong>
+        <button class="toggle-scores" aria-label="Toggle scores"></button>
+      </div>
+      <div class="score-list-content">
+        <div class="best-score">Best: 0</div>
+        <!-- Score entries will be added here dynamically -->
+      </div>
+    </div>
     <div id="game-board">
       <div class="score-container">
         <div class="score-label">score</div>

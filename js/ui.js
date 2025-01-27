@@ -128,28 +128,43 @@ class GameUI {
 
   updateScoreList() {
     const scoreListElement = document.querySelector(".score-list");
+    const scoreListContent = scoreListElement.querySelector(
+      ".score-list-content"
+    );
     const scores = GameStorage.getStoredScores();
     const bestScore = scores.reduce((max, item) => {
       const score = typeof item === "object" ? item.score : item;
       return Math.max(max, score);
     }, 0);
 
-    scoreListElement.innerHTML = `
-            <strong>Recent Scores</strong>
-            <div class="best-score">Best: ${bestScore}</div>
-            ${scores
-              .map((item) => {
-                if (typeof item === "object" && item.score !== undefined) {
-                  return `<div class="score-entry">
+    scoreListContent.innerHTML = `
+        <div class="best-score">Best: ${bestScore}</div>
+        ${scores
+          .map((item) => {
+            if (typeof item === "object" && item.score !== undefined) {
+              return `<div class="score-entry">
                         <span style="font-size: 14px; font-weight: bold; color: #776e65;">
                             ${item.score} <span style="font-weight: normal; font-size: 12px;">points</span>
                         </span>
                         <br><span style="color: #a9a9a9; font-size: 11px;">${item.timestamp}</span>
                     </div>`;
-                }
-                return `<div class="score-entry">${item} (old format)</div>`;
-              })
-              .join("")}
-        `;
+            }
+            return `<div class="score-entry">${item} (old format)</div>`;
+          })
+          .join("")}
+    `;
+
+    // Add click handler if not already added
+    if (!scoreListElement.dataset.handlerAdded) {
+      const header = scoreListElement.querySelector(".score-list-header");
+      header.addEventListener("click", () => {
+        if (window.innerWidth <= 768) {
+          scoreListElement.classList.toggle("expanded");
+        } else {
+          scoreListElement.classList.toggle("collapsed");
+        }
+      });
+      scoreListElement.dataset.handlerAdded = "true";
+    }
   }
 }
